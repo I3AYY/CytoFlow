@@ -214,17 +214,21 @@
             </div>
 
             <nav class="flex-1 p-3 space-y-1.5 overflow-y-auto overflow-x-hidden">
-                <a href="#" @click.prevent="page = 'dashboard'" :class="['flex items-center gap-4 px-3 py-3.5 rounded-2xl transition-all group overflow-hidden', page === 'dashboard' ? 'bg-blue-500/10 text-blue-600 shadow-sm border border-blue-500/20' : 'theme-text-muted hover:bg-black/5 hover:theme-text']" :title="!isSidebarOpen ? 'Dashboard' : ''">
-                    <div class="w-8 flex justify-center"><i class="ph ph-squares-four text-2xl group-hover:text-blue-500 group-hover:animate-pulse transition-all"></i></div>
-                    <span v-show="isSidebarOpen" class="whitespace-nowrap font-bold text-[15px]">Dashboard</span>
-                </a>
                 <a href="#" @click.prevent="openRegisterPage" :class="['flex items-center gap-4 px-3 py-3.5 rounded-2xl transition-all group overflow-hidden', page === 'register' ? 'bg-pink-500/10 text-pink-600 shadow-sm border border-pink-500/20' : 'theme-text-muted hover:bg-black/5 hover:theme-text']" :title="!isSidebarOpen ? 'ลงทะเบียน' : ''">
                     <div class="w-8 flex justify-center"><i class="ph ph-user-plus text-2xl group-hover:text-pink-500 group-hover:-translate-y-1 transition-transform"></i></div>
                     <span v-show="isSidebarOpen" class="whitespace-nowrap font-bold text-[15px]">ลงทะเบียน</span>
                 </a>
+                <a href="#" @click.prevent="page = 'dashboard'" :class="['flex items-center gap-4 px-3 py-3.5 rounded-2xl transition-all group overflow-hidden', page === 'dashboard' ? 'bg-blue-500/10 text-blue-600 shadow-sm border border-blue-500/20' : 'theme-text-muted hover:bg-black/5 hover:theme-text']" :title="!isSidebarOpen ? 'รายการผู้รับบริการ' : ''">
+                    <div class="w-8 flex justify-center"><i class="ph ph-users-three text-2xl group-hover:text-blue-500 transition-all"></i></div>
+                    <span v-show="isSidebarOpen" class="whitespace-nowrap font-bold text-[15px]">รายการผู้รับบริการ</span>
+                </a>
                 <a v-if="canAccessReport" href="#" @click.prevent="openReportList" :class="['flex items-center gap-4 px-3 py-3.5 rounded-2xl transition-all group overflow-hidden', ['report_list', 'report_form'].includes(page) ? 'bg-emerald-500/10 text-emerald-600 shadow-sm border border-emerald-500/20' : 'theme-text-muted hover:bg-black/5 hover:theme-text']" :title="!isSidebarOpen ? 'รายงานผล' : ''">
-                    <div class="w-8 flex justify-center"><i class="ph ph-file-text text-2xl group-hover:text-emerald-500 group-hover:scale-110 transition-transform"></i></div>
+                    <div class="w-8 flex justify-center"><i class="ph ph-file-text text-2xl group-hover:text-emerald-500 transition-transform"></i></div>
                     <span v-show="isSidebarOpen" class="whitespace-nowrap font-bold text-[15px]">รายงานผล</span>
+                </a>
+                <a href="#" @click.prevent="page = 'statistics'" :class="['flex items-center gap-4 px-3 py-3.5 rounded-2xl transition-all group overflow-hidden', page === 'statistics' ? 'bg-violet-500/10 text-violet-600 shadow-sm border border-violet-500/20' : 'theme-text-muted hover:bg-black/5 hover:theme-text']" :title="!isSidebarOpen ? 'สถิติ' : ''">
+                    <div class="w-8 flex justify-center"><i class="ph ph-chart-bar text-2xl group-hover:text-violet-500 transition-transform group-hover:scale-110"></i></div>
+                    <span v-show="isSidebarOpen" class="whitespace-nowrap font-bold text-[15px]">สถิติ</span>
                 </a>
             </nav>
 
@@ -249,16 +253,15 @@
               @scroll="handleMainScroll"
               :class="[
                 theme === 'dark' ? 'bg-gradient-to-br from-slate-900 to-slate-800' : (theme === 'eyecare' ? 'bg-gradient-to-br from-[#fbf6ec] to-[#f4ead5]' : 'bg-gradient-to-br from-slate-50 to-[#eef2f6]'),
-                ['dashboard', 'report_list'].includes(page) ? 'overflow-hidden' : 'overflow-y-auto custom-scroll'
+                ['dashboard', 'report_list', 'statistics'].includes(page) ? 'overflow-hidden' : 'overflow-y-auto custom-scroll'
               ]">
-            <div class="p-4 md:p-6 w-full max-w-[1600px] mx-auto flex-1 flex flex-col gap-4 relative z-10" :class="['dashboard', 'report_list'].includes(page) ? 'h-full min-h-0' : ''">
+            <div class="p-4 md:p-6 w-full max-w-[1600px] mx-auto flex-1 flex flex-col gap-4 relative z-10" :class="['dashboard', 'report_list', 'statistics'].includes(page) ? 'h-full min-h-0' : ''">
                 
                 <transition name="slide-fade" mode="out-in">
                 
-                <!-- Dashboard -->
-                <div v-if="page === 'dashboard'" key="dashboard" class="flex flex-col gap-4 h-full overflow-hidden">
-                    
-                    <!-- ส่วนหัวตาราง (ตรึง) -->
+                <!-- NEW Statistics Page -->
+                <div v-if="page === 'statistics'" key="statistics" class="flex flex-col gap-4 h-full overflow-hidden">
+                    <!-- ส่วนหัวตาราง สถิติ (ตรึง) -->
                     <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 liquid-glass p-4 rounded-2xl shrink-0">
                         <div>
                             <h2 class="text-2xl font-black theme-text">ภาพรวมการดำเนินงาน</h2>
@@ -268,99 +271,135 @@
                             <button @click="isDashboardTopOpen = !isDashboardTopOpen" class="bg-[var(--bg-input)] hover:brightness-95 theme-text w-10 h-10 rounded-xl flex items-center justify-center transition shadow-sm border theme-border">
                                 <i class="ph ph-caret-up text-lg transition-transform duration-300" :class="!isDashboardTopOpen ? 'rotate-180' : ''"></i>
                             </button>
-                            <button @click="fetchData" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 px-4 py-2 rounded-xl shadow-sm transition flex items-center gap-2 text-sm font-bold border border-indigo-200">
+                            <button @click="fetchData" class="bg-violet-50 hover:bg-violet-100 text-violet-700 px-4 py-2 rounded-xl shadow-sm transition flex items-center gap-2 text-sm font-bold border border-violet-200">
                                 <i class="ph ph-arrows-clockwise text-lg" :class="{'animate-spin': isSpinning}"></i> อัปเดตข้อมูล
                             </button>
                         </div>
                     </div>
 
-                    <!-- ส่วนสถิติแบบเต็ม -->
-                    <div v-show="isDashboardTopOpen" class="grid grid-cols-1 lg:grid-cols-12 gap-4 shrink-0 animate-slide-up origin-top">
-                        <!-- Summary Cards -->
-                        <div class="lg:col-span-3 flex flex-col gap-3">
-                            <div class="liquid-glass p-4 rounded-[1.25rem] relative overflow-hidden group hover:-translate-y-1 transition border-l-4 border-l-blue-500">
-                                <div class="relative z-10"><p class="theme-text-muted text-[11px] font-bold uppercase tracking-widest mb-0">สิ่งส่งตรวจทั้งหมด</p><h3 class="text-3xl leading-none font-black text-blue-500 mt-1">{{ stats.total }}</h3></div>
-                                <i class="ph ph-flask absolute right-4 bottom-3 text-4xl text-blue-500 opacity-20 group-hover:opacity-100 group-hover:scale-110 transition-all"></i>
+                    <!-- พื้นที่เนื้อหาสถิติ (เลื่อนได้) -->
+                    <div class="flex-1 overflow-y-auto custom-scroll pb-6" @scroll="handleTableScroll">
+                        <!-- ส่วนสถิติแบบเต็ม -->
+                        <div v-show="isDashboardTopOpen" class="grid grid-cols-1 lg:grid-cols-12 gap-4 animate-slide-up origin-top mb-4">
+                            <!-- Summary Cards -->
+                            <div class="lg:col-span-3 flex flex-col gap-3">
+                                <div class="liquid-glass p-4 rounded-[1.25rem] relative overflow-hidden group hover:-translate-y-1 transition border-l-4 border-l-blue-500">
+                                    <div class="relative z-10"><p class="theme-text-muted text-[11px] font-bold uppercase tracking-widest mb-0">สิ่งส่งตรวจทั้งหมด</p><h3 class="text-3xl leading-none font-black text-blue-500 mt-1">{{ stats.total }}</h3></div>
+                                    <i class="ph ph-flask absolute right-4 bottom-3 text-4xl text-blue-500 opacity-20 group-hover:opacity-100 group-hover:scale-110 transition-all"></i>
+                                </div>
+                                <div class="liquid-glass p-4 rounded-[1.25rem] relative overflow-hidden group hover:-translate-y-1 transition border-l-4 border-l-emerald-500">
+                                    <div class="relative z-10"><p class="theme-text-muted text-[11px] font-bold uppercase tracking-widest mb-0">รายงานผลแล้ว</p><h3 class="text-3xl leading-none font-black text-emerald-500 mt-1">{{ stats.reported }}</h3></div>
+                                    <i class="ph ph-check-circle absolute right-4 bottom-3 text-4xl text-emerald-500 opacity-20 group-hover:opacity-100 group-hover:scale-110 transition-all"></i>
+                                </div>
+                                <div class="liquid-glass p-4 rounded-[1.25rem] relative overflow-hidden group hover:-translate-y-1 transition border-l-4 border-l-orange-500">
+                                    <div class="relative z-10"><p class="theme-text-muted text-[11px] font-bold uppercase tracking-widest mb-0">รอรายงานผล</p><h3 class="text-3xl leading-none font-black text-orange-500 mt-1">{{ stats.total - stats.reported }}</h3></div>
+                                    <i class="ph ph-clock absolute right-4 bottom-3 text-4xl text-orange-500 opacity-20 group-hover:opacity-100 group-hover:scale-110 transition-all"></i>
+                                </div>
                             </div>
-                            <div class="liquid-glass p-4 rounded-[1.25rem] relative overflow-hidden group hover:-translate-y-1 transition border-l-4 border-l-emerald-500">
-                                <div class="relative z-10"><p class="theme-text-muted text-[11px] font-bold uppercase tracking-widest mb-0">รายงานผลแล้ว</p><h3 class="text-3xl leading-none font-black text-emerald-500 mt-1">{{ stats.reported }}</h3></div>
-                                <i class="ph ph-check-circle absolute right-4 bottom-3 text-4xl text-emerald-500 opacity-20 group-hover:opacity-100 group-hover:scale-110 transition-all"></i>
+
+                            <!-- Charts -->
+                            <div class="lg:col-span-4 liquid-glass p-4 rounded-3xl flex flex-col items-center justify-center relative min-h-[200px]">
+                                <h3 class="font-bold theme-text text-sm absolute top-4 left-5 w-full flex justify-between pr-10">
+                                    <span>ความคืบหน้าภาพรวม</span>
+                                    <span class="text-indigo-500">{{ progressPercent }}%</span>
+                                </h3>
+                                <div class="w-full h-32 mt-4 relative">
+                                    <canvas id="statusChart"></canvas>
+                                </div>
+                                
+                                <!-- TAT Ratio Overlay -->
+                                <div class="w-full mt-3 pt-3 border-t theme-border flex justify-between items-center px-2">
+                                    <div class="text-center">
+                                        <span class="text-[10px] theme-text-muted font-bold block">ในเกณฑ์ TAT ({{tatOverview.percentOnTime}}%)</span>
+                                        <span class="text-emerald-500 font-black text-lg">{{ tatOverview.onTime }}</span>
+                                    </div>
+                                    <div class="flex-1 px-4 flex items-center justify-center">
+                                         <div class="w-full bg-slate-200/50 rounded-full h-2 flex overflow-hidden shadow-inner">
+                                            <div class="bg-gradient-to-r from-emerald-400 to-emerald-500 h-full" :style="{ width: tatOverview.percentOnTime + '%' }"></div>
+                                            <div class="bg-gradient-to-r from-rose-400 to-rose-500 h-full" :style="{ width: (100 - tatOverview.percentOnTime) + '%' }"></div>
+                                        </div>
+                                    </div>
+                                    <div class="text-center">
+                                        <span class="text-[10px] theme-text-muted font-bold block">เกินเกณฑ์ ({{100 - tatOverview.percentOnTime}}%)</span>
+                                        <span class="text-rose-500 font-black text-lg">{{ tatOverview.late }}</span>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="liquid-glass p-4 rounded-[1.25rem] relative overflow-hidden group hover:-translate-y-1 transition border-l-4 border-l-orange-500">
-                                <div class="relative z-10"><p class="theme-text-muted text-[11px] font-bold uppercase tracking-widest mb-0">รอรายงานผล</p><h3 class="text-3xl leading-none font-black text-orange-500 mt-1">{{ stats.total - stats.reported }}</h3></div>
-                                <i class="ph ph-clock absolute right-4 bottom-3 text-4xl text-orange-500 opacity-20 group-hover:opacity-100 group-hover:scale-110 transition-all"></i>
+
+                            <!-- Status by Unit -->
+                            <div class="lg:col-span-5 liquid-glass p-4 rounded-3xl flex flex-col">
+                                <h3 class="font-bold theme-text text-sm mb-3">สถานะแบ่งตามหน่วยงาน</h3>
+                                <div class="flex-1 overflow-y-auto pr-3 space-y-3 max-h-[220px] custom-scroll">
+                                    <div v-for="u in unitStats" :key="u.name" class="w-full">
+                                        <div class="flex justify-between items-end mb-1">
+                                            <span class="text-[13px] font-bold theme-text truncate max-w-[65%]">{{ u.name }}</span>
+                                            <span class="text-xs font-bold theme-text-muted">{{ u.reported }} / {{ u.total }} <span class="text-[10px] opacity-70 font-normal">({{ Math.round((u.reported/u.total)*100) }}%)</span></span>
+                                        </div>
+                                        <div class="w-full bg-black/5 rounded-full h-1.5 overflow-hidden flex shadow-inner">
+                                            <div class="bg-gradient-to-r from-cyan-400 via-blue-500 to-indigo-500 h-full rounded-full transition-all duration-1000 ease-out" :style="{ width: (u.reported/u.total)*100 + '%' }"></div>
+                                        </div>
+                                    </div>
+                                    <div v-if="unitStats.length === 0" class="text-center theme-text-muted text-sm py-10 font-medium">ไม่มีข้อมูลหน่วยงาน</div>
+                                </div>
                             </div>
                         </div>
 
-                        <!-- Charts -->
-                        <div class="lg:col-span-4 liquid-glass p-4 rounded-3xl flex flex-col items-center justify-center relative min-h-[200px]">
-                            <h3 class="font-bold theme-text text-sm absolute top-4 left-5 w-full flex justify-between pr-10">
-                                <span>ความคืบหน้าภาพรวม</span>
-                                <span class="text-indigo-500">{{ progressPercent }}%</span>
-                            </h3>
-                            <div class="w-full h-32 mt-4 relative">
-                                <canvas id="statusChart"></canvas>
-                            </div>
+                        <!-- ส่วนสถิติแบบย่อ -->
+                        <div v-show="!isDashboardTopOpen" class="liquid-glass p-3 rounded-2xl flex flex-wrap gap-4 items-center shrink-0 animate-slide-up mb-4">
+                            <div class="flex items-center gap-3 border-r theme-border pr-4"><div class="w-8 h-8 rounded-full bg-blue-500/10 text-blue-500 flex items-center justify-center"><i class="ph ph-flask text-lg"></i></div><div><p class="text-[9px] font-bold theme-text-muted uppercase">ทั้งหมด</p><p class="text-lg font-black theme-text leading-none mt-0.5">{{ stats.total }}</p></div></div>
+                            <div class="flex items-center gap-3 border-r theme-border pr-4"><div class="w-8 h-8 rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center"><i class="ph ph-check-circle text-lg"></i></div><div><p class="text-[9px] font-bold theme-text-muted uppercase">รายงานผลแล้ว</p><p class="text-lg font-black text-emerald-500 leading-none mt-0.5">{{ stats.reported }}</p></div></div>
+                            <div class="flex items-center gap-3 border-r theme-border pr-4"><div class="w-8 h-8 rounded-full bg-orange-500/10 text-orange-500 flex items-center justify-center"><i class="ph ph-clock text-lg"></i></div><div><p class="text-[9px] font-bold theme-text-muted uppercase">รอผล</p><p class="text-lg font-black text-orange-500 leading-none mt-0.5">{{ stats.total - stats.reported }}</p></div></div>
+                            <div class="flex items-center gap-3 pr-4"><div class="w-8 h-8 rounded-full bg-indigo-500/10 text-indigo-500 flex items-center justify-center"><i class="ph ph-clock-countdown text-lg"></i></div><div><p class="text-[9px] font-bold theme-text-muted uppercase">ในเกณฑ์ TAT</p><p class="text-lg font-black text-indigo-500 leading-none mt-0.5">{{ tatOverview.percentOnTime }}%</p></div></div>
                             
-                            <!-- TAT Ratio Overlay -->
-                            <div class="w-full mt-3 pt-3 border-t theme-border flex justify-between items-center px-2">
-                                <div class="text-center">
-                                    <span class="text-[10px] theme-text-muted font-bold block">ในเกณฑ์ TAT ({{tatOverview.percentOnTime}}%)</span>
-                                    <span class="text-emerald-500 font-black text-lg">{{ tatOverview.onTime }}</span>
-                                </div>
-                                <div class="flex-1 px-4 flex items-center justify-center">
-                                     <div class="w-full bg-slate-200/50 rounded-full h-2 flex overflow-hidden shadow-inner">
-                                        <div class="bg-gradient-to-r from-emerald-400 to-emerald-500 h-full" :style="{ width: tatOverview.percentOnTime + '%' }"></div>
-                                        <div class="bg-gradient-to-r from-rose-400 to-rose-500 h-full" :style="{ width: (100 - tatOverview.percentOnTime) + '%' }"></div>
-                                    </div>
-                                </div>
-                                <div class="text-center">
-                                    <span class="text-[10px] theme-text-muted font-bold block">เกินเกณฑ์ ({{100 - tatOverview.percentOnTime}}%)</span>
-                                    <span class="text-rose-500 font-black text-lg">{{ tatOverview.late }}</span>
-                                </div>
+                            <div class="ml-auto w-48 hidden md:block">
+                                <div class="flex justify-between text-[10px] font-bold theme-text-muted mb-0.5"><span>Progress</span><span>{{ progressPercent }}%</span></div>
+                                <div class="w-full bg-black/5 rounded-full h-1.5 overflow-hidden"><div class="bg-gradient-to-r from-indigo-500 to-purple-500 h-full rounded-full" :style="{ width: progressPercent + '%' }"></div></div>
                             </div>
                         </div>
 
-                        <!-- Status by Unit -->
-                        <div class="lg:col-span-5 liquid-glass p-4 rounded-3xl flex flex-col">
-                            <h3 class="font-bold theme-text text-sm mb-3">สถานะแบ่งตามหน่วยงาน</h3>
-                            <div class="flex-1 overflow-y-auto pr-3 space-y-3 max-h-[220px] custom-scroll">
-                                <div v-for="u in unitStats" :key="u.name" class="w-full">
-                                    <div class="flex justify-between items-end mb-1">
-                                        <span class="text-[13px] font-bold theme-text truncate max-w-[65%]">{{ u.name }}</span>
-                                        <span class="text-xs font-bold theme-text-muted">{{ u.reported }} / {{ u.total }} <span class="text-[10px] opacity-70 font-normal">({{ Math.round((u.reported/u.total)*100) }}%)</span></span>
-                                    </div>
-                                    <div class="w-full bg-black/5 rounded-full h-1.5 overflow-hidden flex shadow-inner">
-                                        <div class="bg-gradient-to-r from-cyan-400 via-blue-500 to-indigo-500 h-full rounded-full transition-all duration-1000 ease-out" :style="{ width: (u.reported/u.total)*100 + '%' }"></div>
-                                    </div>
-                                </div>
-                                <div v-if="unitStats.length === 0" class="text-center theme-text-muted text-sm py-10 font-medium">ไม่มีข้อมูลหน่วยงาน</div>
+                        <!-- เตรียมพื้นที่รองรับสถิติผลการตรวจในอนาคต -->
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 animate-slide-up">
+                            <div class="liquid-glass p-6 rounded-3xl min-h-[250px] flex flex-col items-center justify-center text-center opacity-70 border-dashed border-2">
+                                <i class="ph ph-chart-pie-slice text-5xl theme-text-muted mb-3 opacity-50"></i>
+                                <h3 class="font-bold theme-text">สถิติผลการตรวจ (ทุกหน่วยงาน)</h3>
+                                <p class="text-xs theme-text-muted mt-1">ส่วนรองรับการพัฒนาในอนาคต</p>
+                            </div>
+                            <div class="liquid-glass p-6 rounded-3xl min-h-[250px] flex flex-col items-center justify-center text-center opacity-70 border-dashed border-2">
+                                <i class="ph ph-buildings text-5xl theme-text-muted mb-3 opacity-50"></i>
+                                <h3 class="font-bold theme-text">สถิติผลการตรวจ (แบ่งตามหน่วยงาน)</h3>
+                                <p class="text-xs theme-text-muted mt-1">ส่วนรองรับการพัฒนาในอนาคต</p>
                             </div>
                         </div>
                     </div>
+                </div>
 
-                    <!-- ส่วนสถิติแบบย่อ (ตรึง) -->
-                    <div v-show="!isDashboardTopOpen" class="liquid-glass p-3 rounded-2xl flex flex-wrap gap-4 items-center shrink-0 animate-slide-up">
-                        <div class="flex items-center gap-3 border-r theme-border pr-4"><div class="w-8 h-8 rounded-full bg-blue-500/10 text-blue-500 flex items-center justify-center"><i class="ph ph-flask text-lg"></i></div><div><p class="text-[9px] font-bold theme-text-muted uppercase">ทั้งหมด</p><p class="text-lg font-black theme-text leading-none mt-0.5">{{ stats.total }}</p></div></div>
-                        <div class="flex items-center gap-3 border-r theme-border pr-4"><div class="w-8 h-8 rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center"><i class="ph ph-check-circle text-lg"></i></div><div><p class="text-[9px] font-bold theme-text-muted uppercase">รายงานผลแล้ว</p><p class="text-lg font-black text-emerald-500 leading-none mt-0.5">{{ stats.reported }}</p></div></div>
-                        <div class="flex items-center gap-3"><div class="w-8 h-8 rounded-full bg-orange-500/10 text-orange-500 flex items-center justify-center"><i class="ph ph-clock text-lg"></i></div><div><p class="text-[9px] font-bold theme-text-muted uppercase">รอผล</p><p class="text-lg font-black text-orange-500 leading-none mt-0.5">{{ stats.total - stats.reported }}</p></div></div>
-                        <div class="ml-auto w-48 hidden sm:block">
-                            <div class="flex justify-between text-[10px] font-bold theme-text-muted mb-0.5"><span>Progress</span><span>{{ progressPercent }}%</span></div>
-                            <div class="w-full bg-black/5 rounded-full h-1.5 overflow-hidden"><div class="bg-gradient-to-r from-indigo-500 to-purple-500 h-full rounded-full" :style="{ width: progressPercent + '%' }"></div></div>
+                <!-- Dashboard (รายการผู้รับบริการ) -->
+                <div v-if="page === 'dashboard'" key="dashboard" class="flex flex-col gap-4 h-full overflow-hidden">
+                    
+                    <!-- ส่วนหัวตาราง (ตรึง) -->
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 liquid-glass p-4 rounded-2xl shrink-0">
+                        <div>
+                            <h2 class="text-2xl font-black theme-text">รายการผู้รับบริการ</h2>
+                            <p class="theme-text-muted text-sm font-medium mt-1">ปีงบประมาณ {{ config.selectedYear }}</p>
+                        </div>
+                        <div class="flex gap-3">
+                            <button @click="fetchData" class="bg-blue-50 hover:bg-blue-100 text-blue-700 px-4 py-2 rounded-xl shadow-sm transition flex items-center gap-2 text-sm font-bold border border-blue-200">
+                                <i class="ph ph-arrows-clockwise text-lg" :class="{'animate-spin': isSpinning}"></i> อัปเดตข้อมูล
+                            </button>
                         </div>
                     </div>
 
                     <!-- Filter & Table List -->
                     <div class="liquid-glass rounded-3xl flex flex-col flex-1 min-h-[300px] overflow-hidden">
                         
-                        <!-- ชุดเครื่องมือค้นหา (ตรึง & ปรับลดช่องว่าง) -->
+                        <!-- ชุดเครื่องมือค้นหา (ตรึง) -->
                         <div class="py-3 px-4 border-b theme-border bg-black/5 flex flex-col lg:flex-row gap-3 lg:items-end shrink-0">
                             <div class="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                                <div><label class="label-sm">จากวันที่รับ</label><input v-model="dashDateStart" type="date" class="input-std font-medium py-1.5"></div>
-                                <div><label class="label-sm">ถึงวันที่รับ</label><input v-model="dashDateEnd" type="date" class="input-std font-medium py-1.5"></div>
+                                <div><label class="label-sm">จากวันที่รับ</label><input v-model="dashDateStart" type="date" class="input-std font-medium"></div>
+                                <div><label class="label-sm">ถึงวันที่รับ</label><input v-model="dashDateEnd" type="date" class="input-std font-medium"></div>
                                 <div class="relative">
                                     <label class="label-sm">หน่วยงาน</label>
-                                    <select v-model="unitFilter" class="input-std font-bold theme-text appearance-none py-1.5">
+                                    <select v-model="unitFilter" class="input-std font-bold theme-text appearance-none">
                                         <option value="All" class="font-black text-indigo-600 bg-indigo-50">✦ ทุกหน่วยงาน</option>
                                         <option v-for="u in masterUnits" :key="'duf-'+u" :value="u" class="theme-text font-medium">{{ u }}</option>
                                     </select>
@@ -368,7 +407,7 @@
                                 </div>
                                 <div class="relative">
                                     <label class="label-sm">ค้นหาอิสระ</label>
-                                    <div class="relative"><i class="ph ph-magnifying-glass absolute left-3 top-2 text-slate-400 text-lg"></i><input v-model="searchQuery" type="text" placeholder="Cyto No, HN, ชื่อ..." class="input-std pl-10 py-1.5"></div>
+                                    <div class="relative"><i class="ph ph-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-lg"></i><input v-model="searchQuery" type="text" placeholder="Cyto No, HN, ชื่อ..." class="input-std pl-10"></div>
                                 </div>
                             </div>
                             <div class="flex flex-col gap-1.5 shrink-0 w-full lg:w-auto">
@@ -380,10 +419,9 @@
                             </div>
                         </div>
 
-                        <!-- ตาราง (อนุญาตให้ Scroll เฉพาะส่วนนี้) -->
-                        <div class="overflow-x-auto overflow-y-auto flex-1 relative bg-black/5 custom-scroll" @scroll="handleTableScroll">
+                        <!-- ตาราง -->
+                        <div class="overflow-x-auto overflow-y-auto flex-1 relative bg-black/5 custom-scroll">
                             <table class="w-full text-left border-collapse">
-                                <!-- เปลี่ยนหัวตารางเป็นสีทึบตามธีม เพื่อบังเนื้อหาด้านหลังเวลา Scroll -->
                                 <thead class="text-[11px] uppercase border-b theme-border font-bold sticky top-0 z-20 shadow-sm"
                                        :class="theme === 'dark' ? 'bg-slate-800 text-slate-300' : (theme === 'eyecare' ? 'bg-[#f0e4cc] text-[#7a6a4f]' : 'bg-slate-200 text-slate-700')">
                                     <tr>
@@ -430,7 +468,7 @@
 
                 <!-- Registration Form -->
                 <div v-else-if="page === 'register'" key="register" class="max-w-7xl mx-auto pb-10 w-full animate-slide-up">
-                    <div class="flex items-center justify-between mb-5">
+                    <div class="flex items-center justify-between mb-4">
                         <div class="flex items-center gap-4">
                             <button @click="page='dashboard'" class="w-10 h-10 rounded-2xl bg-[var(--bg-input)] border theme-border flex items-center justify-center theme-text-muted hover:text-pink-500 hover:border-pink-300 transition-all shadow-sm group"><i class="ph ph-arrow-left text-xl group-hover:-translate-x-1 transition-transform"></i></button>
                             <div>
@@ -444,13 +482,13 @@
                     <form @submit.prevent="submitRegister" class="liquid-glass rounded-[2rem] overflow-hidden">
                         
                         <!-- Section 1 -->
-                        <div class="p-6 md:p-8 border-b theme-border bg-blue-500/5">
-                            <h3 class="text-[13px] font-black text-blue-500 uppercase tracking-widest mb-5 flex items-center gap-2"><i class="ph ph-identification-card text-xl"></i> ข้อมูลทั่วไป</h3>
-                            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
+                        <div class="p-4 md:p-5 border-b theme-border bg-blue-500/5">
+                            <h3 class="text-[13px] font-black text-blue-500 uppercase tracking-widest mb-4 flex items-center gap-2"><i class="ph ph-identification-card text-xl"></i> ข้อมูลทั่วไป</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
                                 <div class="xl:col-span-1"><label class="label-sm">Cyto No.</label><input type="text" :value="isEditMode || viewMode ? formReg.cytoNo : (formReg.cytoNoPreview || 'กำลังโหลด...')" disabled class="input-std font-bold cursor-not-allowed border-dashed"></div>
                                 <div class="xl:col-span-1"><label class="label-sm">HN (7 หลัก)</label><input v-model="formReg.hn" type="text" maxlength="7" @input="formReg.hn = formReg.hn.replace(/\D/g, '')" class="input-std font-bold focus:ring-2 focus:ring-blue-400" placeholder="ตัวเลข 7 หลัก" :disabled="viewMode"></div>
                                 <div class="xl:col-span-2"><label class="label-sm">เลขประจำตัวประชาชน</label><input v-model="formReg.cid" type="text" maxlength="13" @input="formReg.cid = formReg.cid.replace(/\D/g, '')" class="input-std font-medium focus:ring-2 focus:ring-blue-400" placeholder="ตัวเลข 13 หลัก" :disabled="viewMode"></div>
-                                <div class="xl:col-span-1"><label class="label-sm">คำนำหน้า</label><div class="relative"><select v-model="formReg.prefix" class="input-std font-bold focus:ring-2 focus:ring-blue-400 appearance-none" :disabled="viewMode"><option value="" disabled selected>เลือก...</option><option v-for="(p, i) in prefixes" :key="'p-'+i" :value="p">{{ p }}</option></select><i v-if="!viewMode" class="ph ph-caret-down absolute right-3 top-3 text-slate-400 pointer-events-none"></i></div></div>
+                                <div class="xl:col-span-1"><label class="label-sm">คำนำหน้า</label><div class="relative"><select v-model="formReg.prefix" class="input-std font-bold focus:ring-2 focus:ring-blue-400 appearance-none" :disabled="viewMode"><option value="" disabled selected>เลือก...</option><option v-for="(p, i) in prefixes" :key="'p-'+i" :value="p">{{ p }}</option></select><i v-if="!viewMode" class="ph ph-caret-down absolute right-3 top-2.5 text-slate-400 pointer-events-none"></i></div></div>
                                 <div class="xl:col-span-1"><label class="label-sm">ชื่อ <span class="text-red-500">*</span></label><input v-model="formReg.fname" type="text" class="input-std font-bold focus:ring-2 focus:ring-blue-400" required :disabled="viewMode"></div>
                                 <div class="xl:col-span-2"><label class="label-sm">นามสกุล <span class="text-red-500">*</span></label><input v-model="formReg.lname" type="text" class="input-std font-bold focus:ring-2 focus:ring-blue-400" required :disabled="viewMode"></div>
                                 <div><label class="label-sm">อายุ <span class="text-red-500">*</span></label><input v-model="formReg.age" type="number" class="input-std font-bold focus:ring-2 focus:ring-blue-400" required :disabled="viewMode"></div>
@@ -461,13 +499,13 @@
                         </div>
                         
                         <!-- Section 2 -->
-                        <div class="p-6 md:p-8 border-b theme-border bg-orange-500/5">
-                            <h3 class="text-[13px] font-black text-orange-500 uppercase tracking-widest mb-5 flex items-center gap-2"><i class="ph ph-hospital text-xl"></i> ข้อมูลหน่วยงาน</h3>
-                            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
+                        <div class="p-4 md:p-5 border-b theme-border bg-orange-500/5">
+                            <h3 class="text-[13px] font-black text-orange-500 uppercase tracking-widest mb-4 flex items-center gap-2"><i class="ph ph-hospital text-xl"></i> ข้อมูลหน่วยงาน</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
                                 <div class="xl:col-span-2 relative unit-dropdown">
                                     <label class="label-sm">หน่วยเก็บ <span class="text-red-500">*</span></label>
                                     <input type="text" v-model="ui.searchUnit" @focus="!viewMode && (ui.showUnitList = true)" class="input-std font-bold focus:ring-2 focus:ring-orange-400" placeholder="พิมพ์เพื่อค้นหา..." required :disabled="viewMode">
-                                    <i v-if="!viewMode" class="ph ph-caret-down absolute right-3 top-[38px] text-slate-400 pointer-events-none"></i>
+                                    <i v-if="!viewMode" class="ph ph-caret-down absolute right-3 top-[34px] text-slate-400 pointer-events-none"></i>
                                     <ul v-show="ui.showUnitList && filteredUnits.length > 0" class="absolute z-10 w-full bg-[var(--bg-input)] border theme-border shadow-xl max-h-48 overflow-y-auto rounded-xl mt-1 backdrop-blur-md">
                                         <li v-for="(u, idx) in filteredUnits" :key="'ul-'+idx" @click.stop="selectUnit(u)" class="px-4 py-2 hover:bg-black/5 cursor-pointer text-[14px] font-medium theme-text border-b theme-border last:border-0">{{ u }}</li>
                                     </ul>
@@ -475,7 +513,7 @@
                                 <div class="relative dist-dropdown">
                                     <label class="label-sm">อำเภอ</label>
                                     <input type="text" v-model="ui.searchDist" @focus="!viewMode && (ui.showDistList = true)" class="input-std font-medium focus:ring-2 focus:ring-orange-400" placeholder="พิมพ์ค้นหา..." :disabled="viewMode">
-                                    <i v-if="!viewMode" class="ph ph-caret-down absolute right-3 top-[38px] text-slate-400 pointer-events-none"></i>
+                                    <i v-if="!viewMode" class="ph ph-caret-down absolute right-3 top-[34px] text-slate-400 pointer-events-none"></i>
                                     <ul v-show="ui.showDistList && filteredDistricts.length > 0" class="absolute z-10 w-full bg-[var(--bg-input)] border theme-border shadow-xl max-h-48 overflow-y-auto rounded-xl mt-1 backdrop-blur-md">
                                         <li v-for="(d, idx) in filteredDistricts" :key="'dl-'+idx" @click.stop="selectDist(d)" class="px-4 py-2 hover:bg-black/5 cursor-pointer text-[14px] font-medium theme-text border-b theme-border last:border-0">{{ d }}</li>
                                     </ul>
@@ -487,14 +525,14 @@
                         </div>
                         
                         <!-- Section 3 -->
-                        <div class="p-6 md:p-8 bg-emerald-500/5">
-                            <h3 class="text-[13px] font-black text-emerald-500 uppercase tracking-widest mb-5 flex items-center gap-2"><i class="ph ph-heartbeat text-xl"></i> ข้อมูลทางคลินิก</h3>
-                            <div class="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-6 gap-5">
+                        <div class="p-4 md:p-5 bg-emerald-500/5">
+                            <h3 class="text-[13px] font-black text-emerald-500 uppercase tracking-widest mb-4 flex items-center gap-2"><i class="ph ph-heartbeat text-xl"></i> ข้อมูลทางคลินิก</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-6 gap-3">
                                 <div><label class="label-sm">Para</label><input v-model="formReg.para" type="text" maxlength="6" @input="formReg.para = formReg.para.replace(/\D/g, '')" class="input-std font-bold focus:ring-2 focus:ring-emerald-400 text-center" :disabled="viewMode"></div>
                                 <div><label class="label-sm">Last</label><input v-model="formReg.last" type="text" maxlength="3" @input="formReg.last = formReg.last.replace(/\D/g, '')" class="input-std font-bold focus:ring-2 focus:ring-emerald-400 text-center" :disabled="viewMode"></div>
                                 <div>
                                     <label class="label-sm">LMP</label>
-                                    <select v-model="ui.lmpType" class="input-std font-medium focus:ring-2 focus:ring-emerald-400 mb-2" :disabled="viewMode">
+                                    <select v-model="ui.lmpType" class="input-std font-medium focus:ring-2 focus:ring-emerald-400" :class="{'mb-2': ui.lmpType === 'ระบุวันที่'}" :disabled="viewMode">
                                         <option value="ระบุวันที่">ระบุวันที่</option><option value="หมดประจำเดือน">หมดประจำเดือน</option><option value="จำไม่ได้">จำไม่ได้</option><option value="หลังคลอด">หลังคลอด</option>
                                     </select>
                                     <input v-if="ui.lmpType === 'ระบุวันที่'" v-model="ui.lmpDate" type="date" class="input-std font-medium focus:ring-2 focus:ring-emerald-400 animate-slide-up" :disabled="viewMode">
@@ -502,8 +540,8 @@
                                 
                                 <div class="xl:col-span-3 relative contra-dropdown">
                                     <label class="label-sm">การคุมกำเนิด</label>
-                                    <input type="text" v-model="ui.searchContra" @focus="!viewMode && (ui.showContraList = true)" class="input-std font-medium focus:ring-2 focus:ring-emerald-400 mb-2" placeholder="พิมพ์เพื่อค้นหา..." :disabled="viewMode">
-                                    <i v-if="!viewMode" class="ph ph-caret-down absolute right-3 top-[38px] text-slate-400 pointer-events-none"></i>
+                                    <input type="text" v-model="ui.searchContra" @focus="!viewMode && (ui.showContraList = true)" class="input-std font-medium focus:ring-2 focus:ring-emerald-400" :class="{'mb-2': ui.searchContra === 'อื่นๆ (ระบุ)'}" placeholder="พิมพ์เพื่อค้นหา..." :disabled="viewMode">
+                                    <i v-if="!viewMode" class="ph ph-caret-down absolute right-3 top-[34px] text-slate-400 pointer-events-none"></i>
                                     <ul v-show="ui.showContraList && filteredContras.length > 0" class="absolute z-10 w-full bg-[var(--bg-input)] border theme-border shadow-xl max-h-48 overflow-y-auto rounded-xl mt-1 backdrop-blur-md">
                                         <li v-for="(c, idx) in filteredContras" :key="'cl-'+idx" @click.stop="selectContra(c)" class="px-4 py-2 hover:bg-black/5 cursor-pointer text-[14px] font-medium theme-text border-b theme-border">{{ c }}</li>
                                     </ul>
@@ -512,12 +550,12 @@
                                 
                                 <div class="xl:col-span-3 relative prevtx-dropdown">
                                     <label class="label-sm">Previous treatment</label>
-                                    <div @click="!viewMode && (ui.showPrevTxList = !ui.showPrevTxList)" class="input-std font-medium focus:ring-2 focus:ring-emerald-400 min-h-[44px] flex flex-wrap gap-1.5 items-center relative" :class="viewMode ? 'cursor-not-allowed bg-black/5' : 'cursor-pointer'">
+                                    <div @click="!viewMode && (ui.showPrevTxList = !ui.showPrevTxList)" class="input-std font-medium focus:ring-2 focus:ring-emerald-400 min-h-[38px] flex flex-wrap gap-1.5 items-center relative" :class="viewMode ? 'cursor-not-allowed bg-black/5' : 'cursor-pointer'">
                                         <span v-if="ui.prevTxSelections.length === 0" class="text-slate-400 font-normal">ไม่มีข้อมูล...</span>
                                         <span v-for="(item, idx) in ui.prevTxSelections" :key="idx" class="bg-emerald-500/10 text-emerald-600 px-2 py-0.5 rounded-md text-[12px] flex items-center gap-1 font-bold border border-emerald-500/20 shadow-sm">
                                             {{ item }} <i v-if="!viewMode" class="ph ph-x cursor-pointer hover:text-emerald-800 ml-1 font-bold" @click.stop="togglePrevTx(item)"></i>
                                         </span>
-                                        <i v-if="!viewMode" class="ph ph-caret-down absolute right-3 top-[14px] text-slate-400 pointer-events-none"></i>
+                                        <i v-if="!viewMode" class="ph ph-caret-down absolute right-3 top-2.5 text-slate-400 pointer-events-none"></i>
                                     </div>
                                     <ul v-show="ui.showPrevTxList" class="absolute z-20 w-full bg-[var(--bg-input)] border theme-border shadow-xl max-h-48 overflow-y-auto rounded-xl mt-1 backdrop-blur-md">
                                         <li v-for="(pt, idx) in masterPrevTx" :key="'pt-'+idx" class="px-4 py-2 hover:bg-black/5 cursor-pointer text-[14px] theme-text flex items-center border-b theme-border font-medium">
@@ -548,9 +586,9 @@
                                 </div>
                             </div>
                         </div>
-                        <div v-if="!viewMode" class="bg-black/5 p-5 md:p-6 flex flex-col md:flex-row justify-end gap-3 border-t theme-border">
-                            <button type="button" @click="page='dashboard'" class="px-8 py-3 rounded-2xl theme-text-muted hover:theme-text hover:bg-black/10 transition font-bold">ยกเลิก</button>
-                            <button type="submit" class="px-10 py-3 rounded-2xl bg-gradient-to-r from-pink-500 to-rose-500 text-white font-black shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1 text-[15px]">
+                        <div v-if="!viewMode" class="bg-black/5 p-4 flex flex-col md:flex-row justify-end gap-3 border-t theme-border">
+                            <button type="button" @click="page='dashboard'" class="px-8 py-2.5 rounded-2xl theme-text-muted hover:theme-text hover:bg-black/10 transition font-bold text-[14px]">ยกเลิก</button>
+                            <button type="submit" class="px-10 py-2.5 rounded-2xl bg-gradient-to-r from-pink-500 to-rose-500 text-white font-black shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1 text-[14px]">
                                 {{ isEditMode ? 'บันทึกการแก้ไข' : 'บันทึกข้อมูลใหม่' }}
                             </button>
                         </div>
@@ -560,25 +598,27 @@
                 <!-- Report List -->
                 <div v-else-if="page === 'report_list'" key="report_list" class="flex flex-col gap-4 h-full animate-slide-up overflow-hidden">
                     
-                    <!-- ส่วนหัวหน้า (ตรึง) -->
                     <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 liquid-glass p-4 rounded-2xl shrink-0">
                         <div>
                             <h2 class="text-2xl font-black theme-text">รายงานผลทางเซลล์วิทยา (Cytology Report)</h2>
                             <p class="theme-text-muted text-sm font-medium mt-1">ปีงบประมาณ {{ config.selectedYear }}</p>
                         </div>
+                        <div class="flex gap-3">
+                            <button @click="fetchData" class="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 px-4 py-2 rounded-xl shadow-sm transition flex items-center gap-2 text-sm font-bold border border-emerald-200">
+                                <i class="ph ph-arrows-clockwise text-lg" :class="{'animate-spin': isSpinning}"></i> อัปเดตข้อมูล
+                            </button>
+                        </div>
                     </div>
                     
-                    <!-- Filter & Table List -->
                     <div class="liquid-glass rounded-3xl flex flex-col flex-1 min-h-[300px] overflow-hidden">
                         
-                        <!-- ชุดเครื่องมือค้นหา (ตรึง) -->
                         <div class="py-3 px-4 border-b theme-border bg-black/5 flex flex-col lg:flex-row gap-3 lg:items-end shrink-0">
                             <div class="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                                <div><label class="label-sm">จากวันที่รับ</label><input v-model="ui.reportDateStart" type="date" class="input-std focus:ring-2 focus:ring-emerald-400 font-medium py-1.5"></div>
-                                <div><label class="label-sm">ถึงวันที่รับ</label><input v-model="ui.reportDateEnd" type="date" class="input-std focus:ring-2 focus:ring-emerald-400 font-medium py-1.5"></div>
+                                <div><label class="label-sm">จากวันที่รับ</label><input v-model="ui.reportDateStart" type="date" class="input-std focus:ring-2 focus:ring-emerald-400 font-medium"></div>
+                                <div><label class="label-sm">ถึงวันที่รับ</label><input v-model="ui.reportDateEnd" type="date" class="input-std focus:ring-2 focus:ring-emerald-400 font-medium"></div>
                                 <div class="relative">
                                     <label class="label-sm">หน่วยงาน</label>
-                                    <select v-model="unitFilter" class="input-std focus:ring-2 focus:ring-emerald-400 appearance-none font-bold py-1.5">
+                                    <select v-model="unitFilter" class="input-std focus:ring-2 focus:ring-emerald-400 appearance-none font-bold">
                                         <option value="All" class="font-black text-indigo-600 bg-indigo-50">✦ ทุกหน่วยงาน</option>
                                         <option v-for="u in masterUnits" :key="'ru-'+u" :value="u" class="theme-text font-medium">{{ u }}</option>
                                     </select>
@@ -586,7 +626,7 @@
                                 </div>
                                 <div class="relative">
                                     <label class="label-sm">ค้นหาอิสระ</label>
-                                    <div class="relative"><i class="ph ph-magnifying-glass absolute left-3 top-2 text-slate-400 text-lg"></i><input v-model="ui.reportSearch" type="text" placeholder="Cyto No, HN, ชื่อ..." class="input-std focus:ring-2 focus:ring-emerald-400 pl-10 py-1.5"></div>
+                                    <div class="relative"><i class="ph ph-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-lg"></i><input v-model="ui.reportSearch" type="text" placeholder="Cyto No, HN, ชื่อ..." class="input-std focus:ring-2 focus:ring-emerald-400 pl-10"></div>
                                 </div>
                             </div>
                             <div class="flex flex-col gap-1.5 shrink-0 w-full lg:w-auto">
@@ -598,10 +638,8 @@
                             </div>
                         </div>
 
-                        <!-- ตาราง (อนุญาตให้ Scroll เฉพาะส่วนนี้) -->
                         <div class="overflow-x-auto overflow-y-auto flex-1 relative bg-black/5 custom-scroll">
                             <table class="w-full text-left border-collapse">
-                                <!-- เปลี่ยนหัวตารางเป็นสีทึบตามธีม เพื่อบังเนื้อหาด้านหลังเวลา Scroll -->
                                 <thead class="text-[11px] uppercase border-b theme-border font-bold sticky top-0 z-20 shadow-sm"
                                        :class="theme === 'dark' ? 'bg-slate-800 text-slate-300' : (theme === 'eyecare' ? 'bg-[#f0e4cc] text-[#7a6a4f]' : 'bg-slate-200 text-slate-700')">
                                     <tr><th class="px-5 py-2.5 whitespace-nowrap">Cyto No</th><th class="px-5 py-2.5 whitespace-nowrap">HN</th><th class="px-5 py-2.5 whitespace-nowrap">ชื่อ-สกุล</th><th class="px-5 py-2.5 whitespace-nowrap">หน่วยงาน</th><th class="px-5 py-2.5 whitespace-nowrap text-center">TAT (14 days)</th><th class="px-5 py-2.5 whitespace-nowrap text-center">สถานะ</th><th class="px-5 py-2.5 whitespace-nowrap text-center">จัดการ</th></tr>
@@ -644,8 +682,8 @@
                 </div>
 
                 <!-- Report Form -->
-                <div v-else-if="page === 'report_form'" key="report_form" class="max-w-6xl mx-auto pb-10 w-full animate-slide-up">
-                    <div class="flex items-center gap-4 mb-5">
+                <div v-else-if="page === 'report_form'" key="report_form" class="max-w-[1600px] mx-auto pb-10 w-full animate-slide-up">
+                    <div class="flex items-center gap-4 mb-4">
                         <button @click="page='report_list'" class="w-10 h-10 rounded-2xl bg-[var(--bg-input)] border theme-border flex items-center justify-center theme-text-muted hover:text-emerald-500 hover:border-emerald-300 transition-all shadow-sm group"><i class="ph ph-arrow-left text-xl group-hover:-translate-x-1 transition-transform"></i></button>
                         <div>
                             <h2 class="text-2xl font-black theme-text">{{ viewMode ? 'THE BETHESDA 2001 CYTOLOGIC REPORT (อ่านอย่างเดียว)' : 'THE BETHESDA 2001 CYTOLOGIC REPORT' }}</h2>
@@ -653,41 +691,63 @@
                         </div>
                     </div>
 
-                    <!-- Sticky Patient Info -->
-                    <div class="liquid-glass rounded-3xl mb-5 overflow-hidden sticky top-0 z-40 shadow-md">
-                        <div @click="ui.showPatientInfo = !ui.showPatientInfo" class="p-4 bg-[var(--bg-card)] border-b theme-border flex justify-between items-center cursor-pointer hover:bg-black/5 transition">
-                            <div class="flex items-center gap-3 w-full overflow-hidden pr-2">
-                                <h3 v-if="ui.showPatientInfo" class="font-black theme-text flex items-center gap-2 text-base shrink-0"><i class="ph ph-user-circle text-xl text-indigo-500"></i> ข้อมูลผู้ป่วย (Patient Info)</h3>
-                                
-                                <div v-show="!ui.showPatientInfo" class="hidden sm:flex items-center ml-4 text-[13px] animate-slide-up border-l theme-border pl-4 gap-4 overflow-x-auto whitespace-nowrap">
-                                    <span class="bg-emerald-500/10 text-emerald-600 font-black px-2.5 py-1 rounded-md border border-emerald-500/20 shadow-sm shrink-0"><i class="ph ph-identification-badge mr-1"></i>{{ formReport.patient.cytoNo }}</span>
-                                    <span class="theme-text font-black text-[15px] shrink-0"><span class="text-[11px] font-normal theme-text-muted mr-1">{{ formReport.patient.prefix }}</span>{{ formReport.patient.fname }} {{ formReport.patient.lname }}</span>
-                                    <span class="theme-text-muted font-bold text-[14px] shrink-0">{{ formReport.patient.age }} ปี</span>
-                                    <span :class="['font-black text-[12px] px-3 py-1 rounded-lg border shadow-sm shrink-0', formReport.patient.method === 'Conventional cytology' ? 'bg-slate-200/50 theme-text border-slate-300/50' : (formReport.patient.method === 'Liquid-based cytology' ? 'bg-indigo-500/10 text-indigo-600 border-indigo-500/20' : 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20')]">{{ formReport.patient.method || '-' }}</span>
-                                </div>
-                            </div>
-                            <i :class="['ph ph-caret-down theme-text-muted text-lg transition transform duration-300 ml-2 shrink-0', ui.showPatientInfo ? 'rotate-180' : '']"></i>
+                    <!-- Patient Info (พร้อมปุ่มย่อขยายแบบ Progressive Disclosure) -->
+                    <div class="liquid-glass rounded-3xl mb-4 overflow-hidden shadow-md">
+                        <div class="p-4 bg-[var(--bg-card)] border-b theme-border flex justify-between items-center cursor-pointer hover:bg-black/5 transition" @click="ui.showPatientInfo = !ui.showPatientInfo">
+                            <h3 class="font-black theme-text flex items-center gap-2 text-base"><i class="ph ph-user-circle text-xl text-indigo-500"></i> ข้อมูลผู้ป่วย (Patient Info)</h3>
+                            <button class="bg-[var(--bg-input)] hover:brightness-95 theme-text w-8 h-8 rounded-xl flex items-center justify-center transition shadow-sm border theme-border">
+                                <i class="ph ph-caret-up transition-transform duration-300" :class="!ui.showPatientInfo ? 'rotate-180' : ''"></i>
+                            </button>
                         </div>
-                        <div v-show="ui.showPatientInfo" class="p-6 text-[14px] animate-slide-up bg-[var(--bg-input)]">
-                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-y-5 gap-x-8">
-                                <div class="col-span-full flex flex-wrap gap-x-8 gap-y-3 border-b theme-border pb-4">
+
+                        <!-- โหมดย่อ (Compact View - ป้าย Tag สีพาสเทล) -->
+                        <div v-show="!ui.showPatientInfo" class="p-4 bg-[var(--bg-input)] flex flex-wrap items-center gap-3 text-sm animate-slide-up">
+                            
+                            <!-- Cyto No (เขียวพาสเทล) -->
+                            <div class="bg-emerald-500/10 border border-emerald-500/20 px-3 py-1.5 rounded-xl flex items-center gap-2 shadow-sm">
+                                <i class="ph ph-flask text-emerald-500 text-lg"></i>
+                                <span class="font-black text-emerald-500 tracking-wider">{{ formReport.patient.cytoNo }}</span>
+                            </div>
+                            
+                            <!-- Name-Surname (ชาย=ฟ้า, หญิง=ชมพู) -->
+                            <div :class="['px-3 py-1.5 rounded-xl flex items-center gap-2 border shadow-sm', formReport.patient.sex === 'ชาย' ? 'bg-blue-500/10 border-blue-500/20 text-blue-500' : 'bg-pink-500/10 border-pink-500/20 text-pink-500']">
+                                <i :class="['ph text-lg', formReport.patient.sex === 'ชาย' ? 'ph-gender-male' : 'ph-gender-female']"></i>
+                                <span class="font-bold"><span class="text-[11px] font-normal opacity-80 mr-1">{{ formReport.patient.prefix }}</span>{{ formReport.patient.fname }} {{ formReport.patient.lname }}</span>
+                            </div>
+
+                            <!-- Age (สีดำตามระบบ) -->
+                            <div class="bg-[var(--bg-card)] border theme-border px-3 py-1.5 rounded-xl flex items-center gap-2 shadow-sm">
+                                <i class="ph ph-calendar-blank theme-text-muted text-lg"></i>
+                                <span class="font-bold theme-text">{{ formReport.patient.age }} <span class="text-[11px] font-normal theme-text-muted">ปี</span></span>
+                            </div>
+
+                            <!-- Method (สีตามหน้าลงทะเบียน) -->
+                            <div class="ml-auto flex items-center">
+                                <span :class="getMethodColor(formReport.patient.method) + ' shadow-sm block'"><i class="ph ph-microscope mr-1.5"></i>{{ formReport.patient.method || '-' }}</span>
+                            </div>
+                        </div>
+
+                        <!-- โหมดเต็ม (Full View) -->
+                        <div v-show="ui.showPatientInfo" class="p-5 text-[14px] bg-[var(--bg-input)] animate-slide-up">
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-y-4 gap-x-8">
+                                <div class="col-span-full flex flex-wrap gap-x-8 gap-y-3 border-b theme-border pb-3">
                                     <div><span class="text-[10px] font-bold theme-text-muted uppercase tracking-widest block mb-1">Cytologic No.</span> <span class="font-black text-xl text-emerald-500">{{ formReport.patient.cytoNo }}</span></div>
                                     <div><span class="text-[10px] font-bold theme-text-muted uppercase tracking-widest block mb-1">ID Number</span> <span class="font-bold theme-text text-lg">{{ formReport.patient.cid || '-' }}</span></div>
                                     <div><span class="text-[10px] font-bold theme-text-muted uppercase tracking-widest block mb-1">HN</span> <span class="font-bold theme-text text-lg">{{ formReport.patient.hn || '-' }}</span></div>
                                 </div>
-                                <div class="col-span-full flex flex-wrap gap-x-8 gap-y-3 border-b theme-border pb-4">
+                                <div class="col-span-full flex flex-wrap gap-x-8 gap-y-3 border-b theme-border pb-3">
                                     <div><span class="text-[10px] font-bold theme-text-muted uppercase tracking-widest block mb-1">Name</span> <span class="font-bold theme-text text-base"><span class="text-xs font-normal theme-text-muted mr-1">{{ formReport.patient.prefix }}</span>{{ formReport.patient.fname }} {{ formReport.patient.lname }}</span></div>
                                     <div><span class="text-[10px] font-bold theme-text-muted uppercase tracking-widest block mb-1">Age</span> <span class="font-bold theme-text text-base">{{ formReport.patient.age }} <span class="text-xs font-normal theme-text-muted">ปี</span></span></div>
                                     <div><span class="text-[10px] font-bold theme-text-muted uppercase tracking-widest block mb-1">Sex</span> <span :class="['font-black text-base px-3 py-0.5 rounded-md border', formReport.patient.sex === 'หญิง' ? 'bg-pink-500/10 text-pink-500 border-pink-500/20' : 'bg-blue-500/10 text-blue-500 border-blue-500/20']">{{ formReport.patient.sex }}</span></div>
                                 </div>
-                                <div class="col-span-full flex flex-wrap gap-x-8 gap-y-3 border-b theme-border pb-4">
+                                <div class="col-span-full flex flex-wrap gap-x-8 gap-y-3 border-b theme-border pb-3">
                                     <div><span class="text-[10px] font-bold theme-text-muted uppercase tracking-widest block mb-1">Taken</span> <span class="font-bold theme-text">{{ formReport.patient.specimenDate || '-' }}</span></div>
                                     <div><span class="text-[10px] font-bold theme-text-muted uppercase tracking-widest block mb-1">Received</span> <span class="font-bold theme-text">{{ formReport.patient.recDate || '-' }}</span></div>
                                     <div><span class="text-[10px] font-bold theme-text-muted uppercase tracking-widest block mb-1">Department</span> <span class="font-bold theme-text">{{ formReport.patient.unit }}</span></div>
                                 </div>
                                 <div class="col-span-full">
                                     <span class="text-[10px] font-bold theme-text-muted uppercase tracking-widest block mb-1.5">Method of pap smear</span> 
-                                    <span :class="['font-black text-[13px] px-3 py-1.5 rounded-lg border shadow-sm inline-block', formReport.patient.method === 'Conventional cytology' ? 'bg-slate-200/50 theme-text border-slate-300/50' : (formReport.patient.method === 'Liquid-based cytology' ? 'bg-indigo-500/10 text-indigo-600 border-indigo-500/20' : 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20')]">{{ formReport.patient.method || '-' }}</span>
+                                    <span :class="['font-black text-[13px] px-3 py-1 rounded-lg border shadow-sm inline-block', formReport.patient.method === 'Conventional cytology' ? 'bg-slate-200/50 theme-text border-slate-300/50' : (formReport.patient.method === 'Liquid-based cytology' ? 'bg-indigo-500/10 text-indigo-600 border-indigo-500/20' : 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20')]">{{ formReport.patient.method || '-' }}</span>
                                 </div>
                             </div>
                         </div>
@@ -695,68 +755,75 @@
                     
                     <form @submit.prevent="submitReport" class="liquid-glass rounded-[2rem] overflow-hidden">
                         
-                        <div class="p-6 md:p-8 border-b theme-border bg-emerald-500/5">
-                            <h3 class="font-black text-emerald-600 mb-5 text-lg border-l-[4px] border-emerald-500 pl-3">1. SPECIMEN ADEQUACY</h3>
-                            <div class="space-y-5">
-                                <div>
-                                    <div class="flex flex-col sm:flex-row gap-4 mt-2">
-                                        <label class="flex items-center gap-3 p-3.5 border theme-border rounded-2xl transition flex-1" :class="[viewMode ? 'cursor-not-allowed' : 'cursor-pointer hover:bg-black/5', formReport.adequacy==='010 Satisfactory' ? 'border-emerald-500 bg-emerald-500/10 ring-2 ring-emerald-500/30' : 'bg-[var(--bg-input)]']">
-                                            <input type="radio" v-model="formReport.adequacy" value="010 Satisfactory" class="text-emerald-500 focus:ring-emerald-500 w-4 h-4" :disabled="viewMode">
-                                            <span class="theme-text font-bold text-[14px]">010 Satisfactory</span>
-                                        </label>
-                                        <label class="flex items-center gap-3 p-3.5 border theme-border rounded-2xl transition flex-1" :class="[viewMode ? 'cursor-not-allowed' : 'cursor-pointer hover:bg-black/5', formReport.adequacy==='030 Unsatisfactory for evaluation' ? 'border-rose-500 bg-rose-500/10 ring-2 ring-rose-500/30' : 'bg-[var(--bg-input)]']">
-                                            <input type="radio" v-model="formReport.adequacy" value="030 Unsatisfactory for evaluation" class="text-rose-500 focus:ring-rose-500 w-4 h-4" :disabled="viewMode">
-                                            <span class="theme-text font-bold text-[14px]">030 Unsatisfactory for evaluation</span>
-                                        </label>
+                        <div class="grid grid-cols-1 lg:grid-cols-2">
+                            
+                            <!-- Box 1 -->
+                            <div class="p-4 md:p-5 lg:border-r theme-border border-b bg-emerald-500/5 h-full">
+                                <h3 class="font-black text-emerald-600 mb-4 text-lg border-l-[4px] border-emerald-500 pl-3">1. SPECIMEN ADEQUACY</h3>
+                                <div class="space-y-4">
+                                    <div>
+                                        <div class="flex flex-col gap-3">
+                                            <label class="flex items-center gap-3 p-3 border theme-border rounded-xl transition w-full" :class="[viewMode ? 'cursor-not-allowed' : 'cursor-pointer hover:bg-black/5', formReport.adequacy==='010 Satisfactory' ? 'border-emerald-500 bg-emerald-500/10 ring-2 ring-emerald-500/30' : 'bg-[var(--bg-input)]']">
+                                                <input type="radio" v-model="formReport.adequacy" value="010 Satisfactory" class="text-emerald-500 focus:ring-emerald-500 w-4 h-4" :disabled="viewMode">
+                                                <span class="theme-text font-bold text-[14px]">010 Satisfactory</span>
+                                            </label>
+                                            <label class="flex items-center gap-3 p-3 border theme-border rounded-xl transition w-full" :class="[viewMode ? 'cursor-not-allowed' : 'cursor-pointer hover:bg-black/5', formReport.adequacy==='030 Unsatisfactory for evaluation' ? 'border-rose-500 bg-rose-500/10 ring-2 ring-rose-500/30' : 'bg-[var(--bg-input)]']">
+                                                <input type="radio" v-model="formReport.adequacy" value="030 Unsatisfactory for evaluation" class="text-rose-500 focus:ring-rose-500 w-4 h-4" :disabled="viewMode">
+                                                <span class="theme-text font-bold text-[14px]">030 Unsatisfactory for evaluation</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div v-if="formReport.adequacy" class="animate-slide-up bg-emerald-500/10 p-4 rounded-xl border border-emerald-500/20">
+                                        <label class="label-sm text-emerald-600">รายละเอียด {{ formReport.adequacy }} <span class="text-red-500">*</span></label>
+                                        <select v-model="formReport.adequacyDetail" class="input-std focus:ring-2 focus:ring-emerald-500 font-bold mt-1" required :disabled="viewMode">
+                                            <option value="" disabled selected>เลือกรายละเอียด...</option>
+                                            <option v-for="(opt, idx) in adequacyDetailOptions" :key="'adq-'+idx" :value="opt.text">{{ opt.text }}</option>
+                                        </select>
+                                    </div>
+                                    <div class="bg-[var(--bg-input)] p-4 rounded-xl border theme-border shadow-sm">
+                                        <label class="label-sm">Additional (เพิ่มเติม)</label>
+                                        <select v-model="formReport.additional" class="input-std focus:ring-2 focus:ring-emerald-500 font-bold" :class="{'mb-2': formReport.additional === '029 Other'}" :disabled="viewMode">
+                                            <option value="">ไม่ระบุ</option>
+                                            <option v-for="(opt, idx) in additionalOptions" :key="'add-'+idx" :value="opt.text">{{ opt.text }}</option>
+                                        </select>
+                                        <input v-if="formReport.additional === '029 Other'" v-model="ui.reportAdditionalOther" type="text" class="input-std focus:ring-2 focus:ring-emerald-500 animate-slide-up font-bold" placeholder="ระบุ Additional อื่นๆ..." :disabled="viewMode">
                                     </div>
                                 </div>
-                                <div v-if="formReport.adequacy" class="animate-slide-up bg-emerald-500/10 p-5 rounded-2xl border border-emerald-500/20">
-                                    <label class="label-sm text-emerald-600">รายละเอียด {{ formReport.adequacy }} <span class="text-red-500">*</span></label>
-                                    <select v-model="formReport.adequacyDetail" class="input-std focus:ring-2 focus:ring-emerald-500 font-bold mt-1.5" required :disabled="viewMode">
-                                        <option value="" disabled selected>เลือกรายละเอียด...</option>
-                                        <option v-for="(opt, idx) in adequacyDetailOptions" :key="'adq-'+idx" :value="opt.text">{{ opt.text }}</option>
-                                    </select>
-                                </div>
-                                <div class="bg-[var(--bg-input)] p-5 rounded-2xl border theme-border shadow-sm">
-                                    <label class="label-sm">Additional (เพิ่มเติม)</label>
-                                    <select v-model="formReport.additional" class="input-std focus:ring-2 focus:ring-emerald-500 mb-2 font-bold mt-1.5" :disabled="viewMode">
-                                        <option value="">ไม่ระบุ</option>
-                                        <option v-for="(opt, idx) in additionalOptions" :key="'add-'+idx" :value="opt.text">{{ opt.text }}</option>
-                                    </select>
-                                    <input v-if="formReport.additional === '029 Other'" v-model="ui.reportAdditionalOther" type="text" class="input-std focus:ring-2 focus:ring-emerald-500 animate-slide-up font-bold mt-2" placeholder="ระบุ Additional อื่นๆ..." :disabled="viewMode">
+                            </div>
+                            
+                            <!-- Box 2 -->
+                            <div class="p-4 md:p-5 border-b theme-border bg-violet-500/5 h-full flex flex-col">
+                                <h3 class="font-black text-violet-600 mb-4 text-lg border-l-[4px] border-violet-500 pl-3">2. GENERAL CATEGORIZATION</h3>
+                                <div class="space-y-4 flex-1">
+                                    <div>
+                                        <div class="flex justify-between items-center mb-1"><label class="label-sm">100 NEGATIVE FOR INTRAEPITHELIAL LESION OR MALIGNANCY</label><span class="bg-amber-500/10 text-amber-600 text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded border border-amber-500/20">Dev</span></div>
+                                        <input type="text" disabled class="input-std bg-black/5 border-dashed border-2 cursor-not-allowed">
+                                    </div>
+                                    <div>
+                                        <div class="flex justify-between items-center mb-1"><label class="label-sm">200 EPITHELIAL CELLS ABNORMALITIES</label><span class="bg-amber-500/10 text-amber-600 text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded border border-amber-500/20">Dev</span></div>
+                                        <input type="text" disabled class="input-std bg-black/5 border-dashed border-2 cursor-not-allowed">
+                                    </div>
+                                    <div>
+                                        <label class="label-sm text-violet-600">300 OTHER MALIGNANT NEOPLASMS</label>
+                                        <input v-model="formReport.cat300" type="text" class="input-std focus:ring-2 focus:ring-violet-500 font-bold" placeholder="พิมพ์คำอธิบาย (ถ้ามี)..." :disabled="viewMode">
+                                    </div>
+                                    <div class="pt-3 mt-auto">
+                                        <label class="label-sm text-violet-600 flex items-center gap-1.5"><i class="ph ph-chat-text text-lg text-violet-500"></i> Comment</label>
+                                        <textarea v-model="formReport.comment" rows="2" class="input-std focus:ring-2 focus:ring-violet-500 font-medium resize-none" placeholder="อธิบายข้อมูลเพิ่มเติม..." :disabled="viewMode"></textarea>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                        
-                        <div class="p-6 md:p-8 border-b theme-border bg-violet-500/5">
-                            <h3 class="font-black text-violet-600 mb-5 text-lg border-l-[4px] border-violet-500 pl-3">2. GENERAL CATEGORIZATION</h3>
-                            <div class="space-y-5">
-                                <div>
-                                    <div class="flex justify-between items-center mb-1.5"><label class="label-sm">100 NEGATIVE FOR INTRAEPITHELIAL LESION OR MALIGNANCY</label><span class="bg-amber-500/10 text-amber-600 text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded border border-amber-500/20">Under Development</span></div>
-                                    <input type="text" disabled class="input-std bg-black/5 border-dashed border-2 cursor-not-allowed">
-                                </div>
-                                <div>
-                                    <div class="flex justify-between items-center mb-1.5"><label class="label-sm">200 EPITHELIAL CELLS ABNORMALITIES</label><span class="bg-amber-500/10 text-amber-600 text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded border border-amber-500/20">Under Development</span></div>
-                                    <input type="text" disabled class="input-std bg-black/5 border-dashed border-2 cursor-not-allowed">
-                                </div>
-                                <div>
-                                    <label class="label-sm text-violet-600">300 OTHER MALIGNANT NEOPLASMS</label>
-                                    <input v-model="formReport.cat300" type="text" class="input-std focus:ring-2 focus:ring-violet-500 font-bold" placeholder="พิมพ์คำอธิบาย (ถ้ามี)..." :disabled="viewMode">
-                                </div>
-                                <div class="pt-4 border-t theme-border">
-                                    <label class="label-sm text-violet-600 flex items-center gap-2"><i class="ph ph-chat-text text-lg text-violet-500"></i> Comment</label>
-                                    <textarea v-model="formReport.comment" rows="2" class="input-std focus:ring-2 focus:ring-violet-500 font-medium resize-none" placeholder="อธิบายข้อมูลเพิ่มเติม..." :disabled="viewMode"></textarea>
-                                </div>
-                            </div>
+
                         </div>
 
-                        <div class="p-6 md:p-8 border-b theme-border bg-black/5">
-                            <h3 class="font-black theme-text mb-5 text-lg border-l-[4px] border-slate-400 pl-3">Signatures</h3>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Signatures -->
+                        <div class="p-4 md:p-5 border-b theme-border bg-black/5">
+                            <h3 class="font-black theme-text mb-4 text-lg border-l-[4px] border-slate-400 pl-3">Signatures</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 
-                                <div class="bg-indigo-500/10 p-5 rounded-[1.5rem] border border-indigo-500/20 shadow-sm relative overflow-hidden">
+                                <div class="bg-indigo-500/10 p-4 rounded-[1rem] border border-indigo-500/20 shadow-sm relative overflow-hidden">
                                     <div class="absolute -right-4 -top-4 w-24 h-24 bg-indigo-500/10 rounded-full blur-xl"></div>
-                                    <h4 class="font-black text-indigo-600 mb-4 flex items-center gap-2 relative z-10 text-base"><i class="ph ph-microscope text-xl"></i> Cytotechnologist</h4>
+                                    <h4 class="font-black text-indigo-600 mb-3 flex items-center gap-2 relative z-10 text-base"><i class="ph ph-microscope text-xl"></i> Cytotechnologist</h4>
                                     <div class="space-y-3 relative z-10">
                                         <div>
                                             <label class="label-sm text-indigo-600">Name <span class="text-red-500">*</span></label>
@@ -772,9 +839,9 @@
                                     </div>
                                 </div>
 
-                                <div class="bg-rose-500/5 p-5 rounded-[1.5rem] border transition-colors shadow-sm relative overflow-hidden" :class="formReport.hasPatho ? 'border-rose-500/30 bg-rose-500/10' : 'theme-border'">
+                                <div class="bg-rose-500/5 p-4 rounded-[1rem] border transition-colors shadow-sm relative overflow-hidden" :class="formReport.hasPatho ? 'border-rose-500/30 bg-rose-500/10' : 'theme-border'">
                                     <div class="absolute -right-4 -top-4 w-24 h-24 bg-rose-500/10 rounded-full blur-xl"></div>
-                                    <label class="flex items-center gap-3 mb-4 relative z-10" :class="viewMode ? 'cursor-not-allowed' : 'cursor-pointer'">
+                                    <label class="flex items-center gap-3 mb-3 relative z-10" :class="viewMode ? 'cursor-not-allowed' : 'cursor-pointer'">
                                         <input type="checkbox" v-model="formReport.hasPatho" class="w-4 h-4 text-rose-500 focus:ring-rose-500 rounded border-slate-300" :disabled="viewMode">
                                         <h4 class="font-black flex items-center gap-2 text-base" :class="formReport.hasPatho ? 'text-rose-600' : 'theme-text-muted'"><i class="ph ph-stethoscope text-xl"></i> Pathologist</h4>
                                     </label>
@@ -798,9 +865,9 @@
                             </div>
                         </div>
 
-                        <div v-if="!viewMode" class="bg-[var(--bg-card)] p-5 md:p-6 flex flex-col md:flex-row justify-end gap-3 border-t theme-border">
-                            <button type="button" @click="page='report_list'" class="px-8 py-3.5 rounded-2xl theme-text-muted hover:theme-text hover:bg-black/5 transition font-bold text-[14px]">ยกเลิก</button>
-                            <button type="submit" class="px-10 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-black shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1 text-[14px]">{{ formReport.patient.status === 'Reported' ? 'บันทึกแก้ไขผลรายงาน' : 'บันทึกผลรายงาน' }}</button>
+                        <div v-if="!viewMode" class="bg-[var(--bg-card)] p-4 md:p-5 flex flex-col md:flex-row justify-end gap-3 border-t theme-border">
+                            <button type="button" @click="page='report_list'" class="px-8 py-2.5 rounded-2xl theme-text-muted hover:theme-text hover:bg-black/5 transition font-bold text-[14px]">ยกเลิก</button>
+                            <button type="submit" class="px-10 py-2.5 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-black shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1 text-[14px]">{{ formReport.patient.status === 'Reported' ? 'บันทึกแก้ไขผลรายงาน' : 'บันทึกผลรายงาน' }}</button>
                         </div>
                     </form>
                 </div>
