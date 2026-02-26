@@ -1,11 +1,11 @@
 // --- CONFIGURATION ---
-const MASTER_SHEET_ID = 'xxxxx'; // โปรดระบุ ID ของคุณ
+const MASTER_SHEET_ID = 'xxxxx'; // โปรดระบุ ID ของคุณ (แก้ไขให้ตรงกับของคุณด้วยนะครับ)
 
 function doGet() {
   return HtmlService.createTemplateFromFile('index')
     .evaluate()
-    .setTitle('CytoFlow 2026 (v1.0.0 AI Edition)')
-    .addMetaTag('viewport', 'width=device-width, initial-scale=1')
+    .setTitle('CytoFlow 2026 (v1.1.0 AI Edition)')
+    .addMetaTag('viewport', 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no')
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
 
@@ -189,6 +189,21 @@ function apiVerifyOtp(username, inputOtp) {
   } catch (e) { return { status: 'error', message: 'Verify Error: ' + e.message }; }
 }
 
+// --- NEW API: VERIFY PASSWORD FOR LOCK SCREEN ---
+function apiVerifyPassword(username, password) {
+  try {
+    const sheet = SpreadsheetApp.openById(MASTER_SHEET_ID).getSheetByName('Users');
+    const data = sheet.getDataRange().getValues();
+    for (let i = 1; i < data.length; i++) {
+      if (String(data[i][0]) == String(username) && String(data[i][1]) == String(password)) {
+        logSystem("Unlock Screen", "Successfully unlocked", username);
+        return { status: 'success' };
+      }
+    }
+    return { status: 'error', message: 'รหัสผ่านไม่ถูกต้อง' };
+  } catch (e) { return { status: 'error', message: 'System Error: ' + e.message }; }
+}
+
 // --- API: DASHBOARD ---
 function apiGetDashboardData(year) {
   try {
@@ -307,7 +322,6 @@ function apiSubmitReport(form, year, username) {
 
     const cytoNo = sheet.getRange(row, 1).getValue();
     
-    // แก้ไข Log ตามสถานะว่าเป็นการรายงานครั้งแรกหรือแก้ผล
     const logAction = form.isEdit ? "Edit Report" : "Report";
     const logDetail = form.isEdit ? "Updated report data" : "Reported sample";
     logData(year, logAction, logDetail, username, cytoNo);
