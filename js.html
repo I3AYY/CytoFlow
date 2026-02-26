@@ -82,7 +82,8 @@ const app = createApp({
             showPrevTxList: false, prevTxSelections: [], prevTxOtherText: '',
             lmpType: 'ระบุวันที่', lmpDate: '',
             reportDateStart: '', reportDateEnd: '', reportSearch: '',
-            showPatientInfo: true, reportAdditionalOther: ''
+            reportAdditionalOther: '',
+            showPatientInfo: false // นำกลับมาใช้เพื่อทำ Progressive Disclosure
         });
 
         const formReport = reactive({ 
@@ -138,28 +139,16 @@ const app = createApp({
             }
         };
 
-        // --- SCROLL TO COLLAPSE / EXPAND ---
         const handleMainScroll = (e) => {
-            if (page.value === 'report_form') {
-                const scrollTop = e.target.scrollTop;
-                if (scrollTop > 80 && ui.showPatientInfo) {
-                    ui.showPatientInfo = false;
-                } else if (scrollTop <= 10 && !ui.showPatientInfo) {
-                    ui.showPatientInfo = true;
-                }
-            }
+            // ไม่ต้องย่อกราฟเมื่อเลื่อนหน้าต่างหลัก
         };
 
-        // แก้ไข Logic การหุบ/กาง สถิติเวลาเลื่อนตาราง (ป้องกันอาการ แว๊บกางออก)
         const handleTableScroll = (e) => {
-            if (page.value === 'dashboard') {
+            if (page.value === 'statistics') {
                 const scrollTop = e.target.scrollTop;
-                
-                // ถ้าเลื่อนลงเพียงเล็กน้อย (เกิน 5px) ให้บังคับหุบทันที
                 if (scrollTop > 5 && isDashboardTopOpen.value) {
                     isDashboardTopOpen.value = false; 
                 } 
-                // จะกางออกก็ต่อเมื่อ ดันขึ้นไปจนสุดจริงๆ (0px) เท่านั้น
                 else if (scrollTop <= 0 && !isDashboardTopOpen.value) {
                     isDashboardTopOpen.value = true; 
                 }
@@ -213,15 +202,22 @@ const app = createApp({
         const togglePrevTx = (item) => { const idx = ui.prevTxSelections.indexOf(item); if (idx > -1) ui.prevTxSelections.splice(idx, 1); else ui.prevTxSelections.push(item); };
 
         const getMethodColor = (val) => {
-            if (val === 'Conventional cytology') return 'text-slate-600 bg-slate-100 px-2 py-1 rounded-md text-sm border theme-border';
-            if (val === 'Liquid-based cytology') return 'text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-1 rounded-md text-sm font-bold';
-            if (val === 'Liquid-based cytology [HPV โครงการ]') return 'text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-1 rounded-md text-sm font-bold';
-            return 'text-slate-800';
+            if (val === 'Conventional cytology') return 'text-slate-600 bg-slate-100 px-2.5 py-1 rounded-md text-sm border theme-border font-bold';
+            if (val === 'Liquid-based cytology') return 'text-indigo-600 bg-indigo-50 border border-indigo-200 px-2.5 py-1 rounded-md text-sm font-bold';
+            if (val === 'Liquid-based cytology [HPV โครงการ]') return 'text-emerald-600 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-md text-sm font-bold';
+            return 'text-slate-500 font-bold';
         };
 
         watch(() => formReg.prefix, (newVal) => {
             if (['นางสาว', 'นาง', 'เด็กหญิง'].includes(newVal)) formReg.sex = 'หญิง';
             else if (['นาย', 'เด็กชาย', 'พระภิกษุ'].includes(newVal)) formReg.sex = 'ชาย';
+        });
+
+        // ดัก Event เมื่อเปลี่ยนหน้าไปที่ "สถิติ" ให้เรียก fetchData อัตโนมัติ (ลดภาระ User)
+        watch(() => page.value, (newPage, oldPage) => {
+            if (newPage === 'statistics' && oldPage !== 'statistics') {
+                fetchData();
+            }
         });
 
         const logoRef = ref(null);
@@ -308,7 +304,7 @@ const app = createApp({
 
         let donutChart = null;
         const renderCharts = () => {
-            if (page.value !== 'dashboard' || !isDashboardTopOpen.value) return;
+            if (page.value !== 'statistics' || !isDashboardTopOpen.value) return;
             const ctx = document.getElementById('statusChart');
             if(!ctx) return;
             
@@ -346,7 +342,7 @@ const app = createApp({
         };
 
         watch([() => isDashboardTopOpen.value, () => page.value, () => theme.value], async ([newDashOpen, newPage, newTheme]) => { 
-            if (newPage === 'dashboard' && newDashOpen) {
+            if (newPage === 'statistics' && newDashOpen) {
                 await nextTick();
                 setTimeout(renderCharts, 100); 
             }
@@ -454,7 +450,7 @@ const app = createApp({
                 const res = await runGas('apiGetDashboardData', config.selectedYear);
                 if (res && res.status === 'success') {
                     Object.assign(stats, res.stats); patients.value = res.patients || [];
-                    if (page.value === 'dashboard' && isDashboardTopOpen.value) {
+                    if (page.value === 'statistics' && isDashboardTopOpen.value) {
                         await nextTick();
                         renderCharts();
                     }
@@ -580,7 +576,8 @@ const app = createApp({
 
         const openReportForm = (patient, isReadonly = false) => {
             viewMode.value = isReadonly;
-            ui.showPatientInfo = true;
+            ui.showPatientInfo = false; // บังคับให้เริ่มด้วยโหมดย่อเสมอ เพื่อประหยัดพื้นที่ให้มากที่สุด
+            
             formReport.rowId = patient.rowId; formReport.cytoNo = patient.cytoNo; formReport.patient = patient;
             formReport.adequacy = patient.adequacy || ''; formReport.adequacyDetail = patient.adequacyDetail || '';
             if (patient.additional && patient.additional.startsWith('029 Other - ')) { formReport.additional = '029 Other'; ui.reportAdditionalOther = patient.additional.replace('029 Other - ', ''); } else { formReport.additional = patient.additional || ''; ui.reportAdditionalOther = ''; }
