@@ -13,16 +13,27 @@ const runGas = (funcName, ...args) => {
 
 const app = createApp({
     setup() {
+        // --- Core States ---
         const page = ref('login'); 
         const loginStep = ref(1);
         const otpInput = ref('');
         const otpMessage = ref('');
+        const appVersion = "1.1.0 AI Edition";
+        
+        // --- Security / Lock Screen ---
+        const isLocked = ref(false);
+        const lockPassword = ref('');
+        const lockError = ref('');
+        let afkTimeout = null;
+
+        // --- Theme ---
+        const theme = ref('light'); 
         
         const isLoading = ref(false);
         const isDataLoading = ref(false);
         const isSpinning = ref(false);
         const isEditMode = ref(false);
-        const viewMode = ref(false); // New: Read-only state
+        const viewMode = ref(false); 
         const isSidebarOpen = ref(true); 
         const isDashboardTopOpen = ref(true); 
         
@@ -46,9 +57,12 @@ const app = createApp({
         const masterContras = ['ไม่ใช้ฮอร์โมน/ไม่คุมกำเนิด', 'กินยาคุมกำเนิด', 'ฉีดยาคุมกำเนิด', 'ทำหมัน', 'ฝังยาคุมกำเนิด', 'ใส่ห่วงคุมกำเนิด', 'ถุงยางอนามัย', 'อื่นๆ (ระบุ)'];
         const masterPrevTx = ['Not treatment', 'Surgery', 'Radiation', 'Chemotherapy', 'Hormone', 'อื่น ๆ (ระบุ)'];
 
-        const unitFilter = ref('All'); // New: Unit global filter
+        const unitFilter = ref('All'); 
         const searchQuery = ref('');
         const statusFilter = ref('All'); 
+        
+        const dashDateStart = ref('');
+        const dashDateEnd = ref('');
 
         const defaultForm = {
             rowId: '', cytoNo: '', cytoNoPreview: '',
@@ -79,6 +93,60 @@ const app = createApp({
             hasPatho: false, pathoName: '', pathoDate: '', pathoTime: ''
         });
 
+        // --- THEME LOGIC ---
+        const changeTheme = (newTheme) => {
+            theme.value = newTheme;
+            document.documentElement.setAttribute('data-theme', newTheme);
+            const saved = JSON.parse(localStorage.getItem('cytoUser_v99') || '{}');
+            saved.theme = newTheme;
+            localStorage.setItem('cytoUser_v99', JSON.stringify(saved));
+        };
+
+        // --- AFK / LOCK SCREEN LOGIC ---
+        const resetAfkTimer = () => {
+            clearTimeout(afkTimeout);
+            if (page.value !== 'login' && !isLocked.value) {
+                afkTimeout = setTimeout(() => { lockScreen(); }, 25 * 60 * 1000); // 25 Minutes
+            }
+        };
+
+        const lockScreen = () => {
+            if (page.value === 'login') return;
+            isLocked.value = true;
+            lockPassword.value = '';
+            lockError.value = '';
+            clearTimeout(afkTimeout);
+        };
+
+        const unlockScreen = async () => {
+            if (!lockPassword.value) return;
+            isLoading.value = true;
+            lockError.value = '';
+            try {
+                const res = await runGas('apiVerifyPassword', user.username, lockPassword.value);
+                if (res.status === 'success') {
+                    isLocked.value = false;
+                    resetAfkTimer();
+                } else {
+                    lockError.value = 'รหัสผ่านผิดพลาด ระบบกำลังออกจากระบบ...';
+                    setTimeout(() => { forceLogout(); }, 1500);
+                }
+            } catch (e) {
+                lockError.value = 'เกิดข้อผิดพลาดในการยืนยันตัวตน';
+            } finally {
+                isLoading.value = false;
+            }
+        };
+
+        // --- SCROLL TO COLLAPSE ---
+        const handleMainScroll = (e) => {
+            if (page.value === 'report_form' && ui.showPatientInfo) {
+                if (e.target.scrollTop > 80) { // เมื่อเลื่อนจอลงมานิดหน่อย ให้หุบข้อมูลผู้ป่วยอัตโนมัติ
+                    ui.showPatientInfo = false;
+                }
+            }
+        };
+
         // --- COMPUTED ---
         const progressPercent = computed(() => stats.total === 0 ? 0 : Math.round((stats.reported / stats.total) * 100));
         const canAccessReport = computed(() => {
@@ -87,6 +155,24 @@ const app = createApp({
             const pos = user.position || '';
             return pos.includes('นักเทคนิคการแพทย์') || pos.includes('นักวิทยาศาสตร์การแพทย์') || pos.includes('พยาธิแพทย์');
         });
+        
+        const tatOverview = computed(() => {
+            let onTime = 0; let late = 0; let totalWithRecDate = 0;
+            (patients.value || []).forEach(p => {
+                if (p.recDate) {
+                    const tatData = getTAT(p);
+                    totalWithRecDate++;
+                    if (tatData.days <= 14) onTime++; else late++;
+                }
+            });
+            return {
+                onTime: onTime,
+                late: late,
+                total: totalWithRecDate,
+                percentOnTime: totalWithRecDate === 0 ? 0 : Math.round((onTime/totalWithRecDate)*100)
+            };
+        });
+
         const unitStats = computed(() => {
             const map = {};
             (patients.value || []).forEach(p => {
@@ -108,7 +194,7 @@ const app = createApp({
         const togglePrevTx = (item) => { const idx = ui.prevTxSelections.indexOf(item); if (idx > -1) ui.prevTxSelections.splice(idx, 1); else ui.prevTxSelections.push(item); };
 
         const getMethodColor = (val) => {
-            if (val === 'Conventional cytology') return 'text-slate-600 bg-slate-100 px-2 py-1 rounded-md text-sm';
+            if (val === 'Conventional cytology') return 'text-slate-600 bg-slate-100 px-2 py-1 rounded-md text-sm border theme-border';
             if (val === 'Liquid-based cytology') return 'text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-1 rounded-md text-sm font-bold';
             if (val === 'Liquid-based cytology [HPV โครงการ]') return 'text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-1 rounded-md text-sm font-bold';
             return 'text-slate-800';
@@ -132,33 +218,28 @@ const app = createApp({
             } else { img.src = systemConfig.logoUrl; isLogoPlaying.value = true; }
         };
 
-        // --- NEW: Calculate TAT Function ---
+        // --- NEW TAT LOGIC ---
         const getTAT = (p) => {
             if (!p.recDate) return { days: 0, percent: 0, colorClass: 'bg-slate-300', statusText: 'รอข้อมูล' };
             const start = new Date(p.recDate);
-            let end = new Date(); // default to today if pending
+            let end = new Date(); 
             
             if (p.status === 'Reported') {
                 const reportDTStr = p.pathoDateTime ? p.pathoDateTime : p.cytoDateTime;
                 const parsed = parseDateTimeString(reportDTStr);
-                if(parsed.date) {
-                    end = new Date(parsed.date);
-                }
+                if(parsed.date) end = new Date(parsed.date);
             }
             
-            // Calculate diff in days (ignore time completely for simple day diff)
             start.setHours(0,0,0,0); end.setHours(0,0,0,0);
             const diffTime = Math.abs(end - start);
             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
             
-            // Max KPI is 14 days
             let percent = (diffDays / 14) * 100;
             if (percent > 100) percent = 100;
             
-            // Determine Color
-            let colorClass = 'bg-gradient-to-r from-emerald-300 to-emerald-500'; // Green (< 7 days)
-            if (diffDays >= 8 && diffDays <= 12) colorClass = 'bg-gradient-to-r from-yellow-300 to-amber-500'; // Yellow/Orange
-            if (diffDays >= 13) colorClass = 'bg-gradient-to-r from-rose-400 to-red-600'; // Red
+            let colorClass = 'bg-gradient-to-r from-emerald-400 via-emerald-200 to-emerald-400'; 
+            if (diffDays >= 8 && diffDays <= 12) colorClass = 'bg-gradient-to-r from-amber-400 via-yellow-200 to-amber-400'; 
+            if (diffDays >= 13) colorClass = 'bg-gradient-to-r from-rose-500 via-red-300 to-rose-500'; 
             
             return {
                 days: diffDays,
@@ -168,11 +249,14 @@ const app = createApp({
             };
         };
 
-        // Update Filters to use Unit Dropdown
         const filteredPatients = computed(() => {
             let list = patients.value || [];
             if (unitFilter.value !== 'All') list = list.filter(p => p.unit === unitFilter.value);
             if (statusFilter.value !== 'All') list = list.filter(p => p.status === statusFilter.value);
+            
+            if (dashDateStart.value) list = list.filter(p => p.recDate && p.recDate >= dashDateStart.value);
+            if (dashDateEnd.value) list = list.filter(p => p.recDate && p.recDate <= dashDateEnd.value);
+
             if (!searchQuery.value) return list;
             const q = searchQuery.value.toLowerCase();
             return list.filter(p => {
@@ -210,15 +294,15 @@ const app = createApp({
             
             if(donutChart) { donutChart.destroy(); donutChart = null; }
             Chart.defaults.font.family = "'Sarabun', sans-serif";
+            Chart.defaults.color = theme.value === 'dark' ? '#94a3b8' : '#64748b';
             
-            // Create gradient
             const gradComplete = ctx.getContext('2d').createLinearGradient(0, 0, 0, 200);
-            gradComplete.addColorStop(0, '#818cf8'); // Indigo-400
-            gradComplete.addColorStop(1, '#c084fc'); // Purple-400
+            gradComplete.addColorStop(0, '#818cf8'); 
+            gradComplete.addColorStop(1, '#c084fc'); 
             
             const gradPending = ctx.getContext('2d').createLinearGradient(0, 0, 0, 200);
-            gradPending.addColorStop(0, '#fbbf24'); // Amber-400
-            gradPending.addColorStop(1, '#f97316'); // Orange-500
+            gradPending.addColorStop(0, '#fbbf24'); 
+            gradPending.addColorStop(1, '#f97316'); 
 
             donutChart = new Chart(ctx, {
                 type: 'doughnut',
@@ -229,26 +313,19 @@ const app = createApp({
                         backgroundColor: [gradComplete, gradPending], 
                         borderWidth: 0, 
                         hoverOffset: 8,
-                        borderRadius: 10 // Rounded corners on slices
+                        borderRadius: 10 
                     }]
                 },
                 options: { 
-                    circumference: 180, // Half circle
-                    rotation: 270, // Start from left
-                    cutout: '75%', 
-                    responsive: true, 
-                    maintainAspectRatio: false, 
-                    plugins: { 
-                        legend: { display: false }, 
-                        tooltip: { bodyFont: { size: 14, family: "'Sarabun', sans-serif" }, padding: 10, cornerRadius: 8 } 
-                    },
+                    circumference: 180, rotation: 270, cutout: '75%', 
+                    responsive: true, maintainAspectRatio: false, 
+                    plugins: { legend: { display: false }, tooltip: { padding: 10, cornerRadius: 10 } },
                     animation: { animateScale: true, animateRotate: true }
                 }
             });
         };
 
-        // Fix Chart Render bug on page switch
-        watch([() => isDashboardTopOpen.value, () => page.value], async ([newDashOpen, newPage]) => { 
+        watch([() => isDashboardTopOpen.value, () => page.value, () => theme.value], async ([newDashOpen, newPage, newTheme]) => { 
             if (newPage === 'dashboard' && newDashOpen) {
                 await nextTick();
                 setTimeout(renderCharts, 100); 
@@ -263,12 +340,18 @@ const app = createApp({
                 if (!e.target.closest('.prevtx-dropdown')) ui.showPrevTxList = false;
             });
 
+            // AFK Listeners
+            window.addEventListener('mousemove', resetAfkTimer);
+            window.addEventListener('keydown', resetAfkTimer);
+            window.addEventListener('click', resetAfkTimer);
+
             try {
                 const savedUser = localStorage.getItem('cytoUser_v99');
                 if (savedUser) {
                     const parsed = JSON.parse(savedUser);
                     if(parsed.user) Object.assign(user, parsed.user);
                     if(parsed.systemLogo) systemConfig.logoUrl = parsed.systemLogo;
+                    if(parsed.theme) changeTheme(parsed.theme);
                     if (parsed.years) {
                         config.years = parsed.years;
                         const currYear = parsed.currentFiscalYear ? parsed.currentFiscalYear.toString() : "";
@@ -277,6 +360,7 @@ const app = createApp({
                     page.value = 'dashboard';
                     loadMasterData();
                     fetchData();
+                    resetAfkTimer();
                 }
             } catch (e) { localStorage.removeItem('cytoUser_v99'); }
         });
@@ -320,8 +404,8 @@ const app = createApp({
                     Object.assign(user, res.user); config.years = res.years || [];
                     const currYear = res.currentFiscalYear ? res.currentFiscalYear.toString() : "";
                     config.selectedYear = config.years.includes(currYear) ? currYear : config.years[config.years.length - 1];
-                    localStorage.setItem('cytoUser_v99', JSON.stringify({ user: res.user, years: res.years, currentFiscalYear: res.currentFiscalYear, systemLogo: systemConfig.logoUrl }));
-                    page.value = 'dashboard'; loadMasterData(); fetchData();
+                    localStorage.setItem('cytoUser_v99', JSON.stringify({ user: res.user, years: res.years, currentFiscalYear: res.currentFiscalYear, systemLogo: systemConfig.logoUrl, theme: theme.value }));
+                    page.value = 'dashboard'; loadMasterData(); fetchData(); resetAfkTimer();
                 } else { if(typeof Swal !== 'undefined') Swal.fire('OTP Failed', res.message, 'error'); }
             } catch (err) {} finally { isLoading.value = false; }
         };
@@ -333,7 +417,10 @@ const app = createApp({
         };
 
         const forceLogout = () => {
-            localStorage.removeItem('cytoUser_v99'); isLoading.value = true;
+            localStorage.removeItem('cytoUser_v99'); 
+            isLocked.value = false;
+            isLoading.value = true;
+            clearTimeout(afkTimeout);
             setTimeout(() => {
                 user.name = ''; user.image = ''; user.role = ''; page.value = 'login'; 
                 loginStep.value = 1; otpInput.value = ''; formLogin.username = ''; formLogin.password = '';
@@ -474,6 +561,7 @@ const app = createApp({
 
         const openReportForm = (patient, isReadonly = false) => {
             viewMode.value = isReadonly;
+            ui.showPatientInfo = true;
             formReport.rowId = patient.rowId; formReport.cytoNo = patient.cytoNo; formReport.patient = patient;
             formReport.adequacy = patient.adequacy || ''; formReport.adequacyDetail = patient.adequacyDetail || '';
             if (patient.additional && patient.additional.startsWith('029 Other - ')) { formReport.additional = '029 Other'; ui.reportAdditionalOther = patient.additional.replace('029 Other - ', ''); } else { formReport.additional = patient.additional || ''; ui.reportAdditionalOther = ''; }
@@ -491,6 +579,7 @@ const app = createApp({
             formReport.hasPatho = !!formReport.pathoName;
 
             page.value = 'report_form';
+            const mainEl = document.querySelector('main'); if(mainEl) mainEl.scrollTop = 0;
         };
 
         const submitReport = async () => {
@@ -504,7 +593,7 @@ const app = createApp({
                 try {
                     const payload = { 
                         rowId: formReport.rowId, 
-                        isEdit: formReport.patient.status === 'Reported', // Flag สำหรับ Log Data
+                        isEdit: formReport.patient.status === 'Reported', 
                         adequacy: formReport.adequacy, adequacyDetail: formReport.adequacyDetail, 
                         additional: formReport.additional === '029 Other' && ui.reportAdditionalOther ? `029 Other - ${ui.reportAdditionalOther}` : formReport.additional, 
                         cat300: formReport.cat300, comment: formReport.comment,
@@ -542,11 +631,12 @@ const app = createApp({
 
         return {
             page, isLoading, isDataLoading, isSpinning, isEditMode, viewMode, isSidebarOpen, isDashboardTopOpen, 
-            statusFilter, unitFilter, showSettingsModal, showProfileModal, loginStep, otpInput, otpMessage,
-            user, config, formLogin, stats, patients, filteredPatients, progressPercent, unitStats,
+            statusFilter, unitFilter, dashDateStart, dashDateEnd, showSettingsModal, showProfileModal, loginStep, otpInput, otpMessage,
+            user, config, formLogin, stats, tatOverview, patients, filteredPatients, progressPercent, unitStats,
             canAccessReport, formReg, prefixes, searchQuery, systemConfig,
             ui, filteredUnits, filteredDistricts, filteredContras, masterPrevTx, masterCytoTechs, masterPathos, masterUnits,
-            logoRef, isLogoPlaying, toggleLogo,
+            logoRef, isLogoPlaying, toggleLogo, appVersion,
+            theme, changeTheme, isLocked, lockPassword, lockError, lockScreen, unlockScreen, handleMainScroll,
             submitRegister, handleLoginStep1, handleLoginStep2, handleLogout, fetchData, openRegisterPage, openEditMode, openViewMode,
             handleImageUpload, openChangePassword, selectUnit, selectDist, selectContra, togglePrevTx, closeAllDropdowns,
             getMethodColor, getTAT,
