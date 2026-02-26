@@ -138,11 +138,30 @@ const app = createApp({
             }
         };
 
-        // --- SCROLL TO COLLAPSE ---
+        // --- SCROLL TO COLLAPSE / EXPAND ---
         const handleMainScroll = (e) => {
-            if (page.value === 'report_form' && ui.showPatientInfo) {
-                if (e.target.scrollTop > 80) { // เมื่อเลื่อนจอลงมานิดหน่อย ให้หุบข้อมูลผู้ป่วยอัตโนมัติ
+            if (page.value === 'report_form') {
+                const scrollTop = e.target.scrollTop;
+                if (scrollTop > 80 && ui.showPatientInfo) {
                     ui.showPatientInfo = false;
+                } else if (scrollTop <= 10 && !ui.showPatientInfo) {
+                    ui.showPatientInfo = true;
+                }
+            }
+        };
+
+        // แก้ไข Logic การหุบ/กาง สถิติเวลาเลื่อนตาราง (ป้องกันอาการ แว๊บกางออก)
+        const handleTableScroll = (e) => {
+            if (page.value === 'dashboard') {
+                const scrollTop = e.target.scrollTop;
+                
+                // ถ้าเลื่อนลงเพียงเล็กน้อย (เกิน 5px) ให้บังคับหุบทันที
+                if (scrollTop > 5 && isDashboardTopOpen.value) {
+                    isDashboardTopOpen.value = false; 
+                } 
+                // จะกางออกก็ต่อเมื่อ ดันขึ้นไปจนสุดจริงๆ (0px) เท่านั้น
+                else if (scrollTop <= 0 && !isDashboardTopOpen.value) {
+                    isDashboardTopOpen.value = true; 
                 }
             }
         };
@@ -218,7 +237,6 @@ const app = createApp({
             } else { img.src = systemConfig.logoUrl; isLogoPlaying.value = true; }
         };
 
-        // --- NEW TAT LOGIC ---
         const getTAT = (p) => {
             if (!p.recDate) return { days: 0, percent: 0, colorClass: 'bg-slate-300', statusText: 'รอข้อมูล' };
             const start = new Date(p.recDate);
@@ -241,11 +259,13 @@ const app = createApp({
             if (diffDays >= 8 && diffDays <= 12) colorClass = 'bg-gradient-to-r from-amber-400 via-yellow-200 to-amber-400'; 
             if (diffDays >= 13) colorClass = 'bg-gradient-to-r from-rose-500 via-red-300 to-rose-500'; 
             
+            const dayText = diffDays <= 1 ? 'Day' : 'Days';
+            
             return {
                 days: diffDays,
                 percent: percent,
                 colorClass: colorClass,
-                statusText: p.status === 'Reported' ? `${diffDays} วัน (สำเร็จ)` : `${diffDays} วัน (กำลังรัน)`
+                statusText: `${diffDays} ${dayText}`
             };
         };
 
@@ -340,7 +360,6 @@ const app = createApp({
                 if (!e.target.closest('.prevtx-dropdown')) ui.showPrevTxList = false;
             });
 
-            // AFK Listeners
             window.addEventListener('mousemove', resetAfkTimer);
             window.addEventListener('keydown', resetAfkTimer);
             window.addEventListener('click', resetAfkTimer);
@@ -636,7 +655,7 @@ const app = createApp({
             canAccessReport, formReg, prefixes, searchQuery, systemConfig,
             ui, filteredUnits, filteredDistricts, filteredContras, masterPrevTx, masterCytoTechs, masterPathos, masterUnits,
             logoRef, isLogoPlaying, toggleLogo, appVersion,
-            theme, changeTheme, isLocked, lockPassword, lockError, lockScreen, unlockScreen, handleMainScroll,
+            theme, changeTheme, isLocked, lockPassword, lockError, lockScreen, unlockScreen, handleMainScroll, handleTableScroll,
             submitRegister, handleLoginStep1, handleLoginStep2, handleLogout, fetchData, openRegisterPage, openEditMode, openViewMode,
             handleImageUpload, openChangePassword, selectUnit, selectDist, selectContra, togglePrevTx, closeAllDropdowns,
             getMethodColor, getTAT,
