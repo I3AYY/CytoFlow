@@ -1,43 +1,139 @@
 <style>
-  /* Base Adjustments */
-  body { color: #334155; font-size: 15px; }
-  .label-sm { display: block; font-size: 0.85rem; font-weight: 700; color: #475569; margin-bottom: 0.375rem; }
-  .input-std { width: 100%; border: 1px solid #cbd5e1; padding: 0.65rem; border-radius: 0.5rem; font-size: 0.95rem; outline: none; transition: all 0.2s; color: #1e293b; }
+  /* --- THEME VARIABLES (IOS Liquid Glass Inspired) --- */
+  :root {
+      --bg-main: #f4f7f6;
+      --bg-sidebar: rgba(255, 255, 255, 0.75);
+      --bg-card: rgba(255, 255, 255, 0.65);
+      --bg-input: rgba(255, 255, 255, 0.8);
+      --text-main: #334155;
+      --text-muted: #64748b;
+      --border-color: rgba(0, 0, 0, 0.08); /* ปรับให้มองเห็นเส้นชัดเจนขึ้นใน Light Mode */
+      --border-input: #cbd5e1;
+      --shadow-glass: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+      --glass-blur: blur(20px) saturate(180%);
+      --row-hover: rgba(0, 0, 0, 0.02); /* ปรับ Hover ใน Light Mode */
+  }
+
+  [data-theme="dark"] {
+      --bg-main: #1e2430;
+      --bg-sidebar: rgba(30, 36, 48, 0.75);
+      --bg-card: rgba(40, 48, 62, 0.65);
+      --bg-input: rgba(30, 36, 48, 0.8);
+      --text-main: #e2e8f0;
+      --text-muted: #94a3b8;
+      --border-color: rgba(255, 255, 255, 0.05);
+      --border-input: #475569;
+      --shadow-glass: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+      --glass-blur: blur(20px) saturate(150%);
+      --row-hover: rgba(50, 60, 75, 0.9);
+  }
+
+  [data-theme="eyecare"] {
+      --bg-main: #fbf6ec;
+      --bg-sidebar: rgba(251, 246, 236, 0.75);
+      --bg-card: rgba(253, 250, 242, 0.65);
+      --bg-input: rgba(255, 255, 255, 0.8);
+      --text-main: #4a4036;
+      --text-muted: #8c7e6e;
+      --border-color: rgba(100, 80, 50, 0.1);
+      --border-input: #d8cbbb;
+      --shadow-glass: 0 8px 32px 0 rgba(100, 80, 50, 0.05);
+      --glass-blur: blur(20px) saturate(160%);
+      --row-hover: rgba(100, 80, 50, 0.03);
+  }
+
+  /* Base Application */
+  body { 
+      background-color: var(--bg-main); 
+      color: var(--text-main); 
+      font-size: 15px; 
+      transition: background-color 0.5s ease, color 0.5s ease;
+  }
   
-  /* Styling สำหรับโหมด View (Read-Only / Disabled) */
+  /* แก้ไข SweetAlert ให้ลอยอยู่เหนือ Lock Screen เสมอ */
+  .swal2-container { z-index: 9999 !important; }
+
+  .theme-text { color: var(--text-main); }
+  .theme-text-muted { color: var(--text-muted); }
+  .theme-border { border-color: var(--border-color); }
+  .theme-row-hover:hover { background-color: var(--row-hover) !important; }
+
+  /* iOS Liquid Glass Classes */
+  .liquid-glass {
+      background: var(--bg-card);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
+      border: 1px solid var(--border-color);
+      box-shadow: var(--shadow-glass);
+      transition: all 0.5s ease;
+  }
+  .liquid-sidebar {
+      background: var(--bg-sidebar);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
+      border-right: 1px solid var(--border-color);
+  }
+
+  /* Inputs */
+  .label-sm { display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.375rem; }
+  .input-std { 
+      width: 100%; 
+      border: 1px solid var(--border-input); 
+      padding: 0.65rem; 
+      border-radius: 0.75rem;
+      font-size: 0.95rem; 
+      outline: none; 
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+      background: var(--bg-input);
+      color: var(--text-main);
+  }
+  .input-std:focus {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  }
+  
   input:disabled, select:disabled, textarea:disabled, .cursor-not-allowed {
-      background-color: transparent !important;
-      border-color: rgba(203, 213, 225, 0.4) !important;
-      color: #334155 !important;
-      opacity: 1 !important;
+      background-color: rgba(0,0,0,0.03) !important;
+      border-color: transparent !important;
+      color: var(--text-muted) !important;
+      opacity: 0.7 !important;
       box-shadow: none !important;
   }
 
-  /* Transitions */
-  .fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease; }
+  /* Table Adjustments */
+  th.py-2\.5, td.py-2\.5 { padding-top: 0.625rem; padding-bottom: 0.625rem; }
+
+  /* Transitions & Animations */
+  .fade-enter-active, .fade-leave-active { transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
   .fade-enter-from, .fade-leave-to { opacity: 0; }
+  
+  .slide-fade-enter-active { transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1); }
+  .slide-fade-leave-active { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+  .slide-fade-enter-from, .slide-fade-leave-to { transform: translateY(20px); opacity: 0; }
+
+  /* Lock Screen Animation */
+  .screen-lock-enter-active, .screen-lock-leave-active { transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
+  .screen-lock-enter-from, .screen-lock-leave-to { opacity: 0; backdrop-filter: blur(0px); transform: scale(1.05); }
+
   [v-cloak] { display: none; }
   html { scroll-behavior: smooth; }
   
   /* Custom Scrollbar */
   ::-webkit-scrollbar { width: 6px; height: 6px; }
   ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
-  ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-  
-  /* Modal Animation */
-  .animate-slide-up { animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
-  @keyframes slideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-  
-  /* Logo Blending */
-  .blend-logo { mix-blend-mode: multiply; }
+  ::-webkit-scrollbar-thumb { background: var(--border-input); border-radius: 10px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
   
   /* Hide Number Arrows */
   input[type="number"]::-webkit-outer-spin-button,
   input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
   input[type="number"] { -moz-appearance: textfield; }
 
-  /* Deep Space & Pastel Blobs (AI Login) */
+  /* Energy Bar Animation (From User's Preference) */
+  .animate-energy-bar { background-size: 200% 200%; animation: energyFlow 3.2s linear infinite; }
+  @keyframes energyFlow { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+  /* Deep Space & Pastel Blobs (Login) */
   .bg-deep-space { background-color: #0f172a; } 
   @keyframes blob {
     0% { transform: translate(0px, 0px) scale(1); }
@@ -49,7 +145,7 @@
   .animation-delay-2000 { animation-delay: 2s; }
   .animation-delay-4000 { animation-delay: 4s; }
 
-  /* Animated Pastel Text & Hover */
+  /* Animated Pastel Text */
   @keyframes pastel-breathing {
     0% { background-position: 0% 50%; }
     50% { background-position: 100% 50%; }
@@ -61,22 +157,22 @@
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     animation: pastel-breathing 4s ease infinite;
-  }
-  .colorful-hover { transition: all 0.3s ease; }
-  .colorful-hover:hover {
-    background: linear-gradient(to right, #f472b6, #c084fc, #38bdf8);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    transform: scale(1.05);
-    font-weight: bold;
+    padding-bottom: 0.15em; 
+    margin-bottom: -0.15em; 
   }
 
-  /* Glassmorphism Utilities */
-  .glass-modal {
-    background: rgba(255, 255, 255, 0.85);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.5);
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+  /* Gimmick Effect สำหรับชื่อนักพัฒนา */
+  .gimmick-hover {
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    display: inline-block;
+  }
+  .gimmick-hover:hover {
+    background: linear-gradient(270deg, #f472b6, #c084fc, #38bdf8, #818cf8);
+    background-size: 300% 300%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: pastel-breathing 4s ease infinite;
+    transform: scale(1.15) translateY(-2px);
+    font-weight: 900;
   }
 </style>
