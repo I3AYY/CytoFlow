@@ -18,7 +18,7 @@
   
   <div id="app" v-cloak class="w-full h-full relative">
 
-    <!-- Loading Overlay (ตั้งค่าให้ลอยสูงสุด z-[9999] เพื่อให้ลอยเหนือ Lock Screen และ Swal) -->
+    <!-- Loading Overlay -->
     <transition name="fade">
         <div v-if="isLoading" class="fixed inset-0 z-[9999] bg-black/40 backdrop-blur-md flex items-center justify-center">
             <div class="liquid-glass p-8 rounded-[2rem] flex flex-col items-center animate-pulse">
@@ -28,7 +28,7 @@
         </div>
     </transition>
 
-    <!-- LOCK SCREEN OVERLAY (ลด z-index เป็น z-[90] เพื่อไม่ให้บัง Loading) -->
+    <!-- LOCK SCREEN OVERLAY -->
     <transition name="screen-lock">
         <div v-if="isLocked && page !== 'login'" class="fixed inset-0 z-[90] bg-slate-900/90 backdrop-blur-xl flex flex-col items-center justify-center p-6 text-white text-center">
             <div class="w-24 h-24 mb-6 rounded-full overflow-hidden border-4 border-slate-700 shadow-2xl">
@@ -63,7 +63,6 @@
                     <span class="text-[10px] text-white bg-indigo-600 font-bold px-2 py-0.5 rounded-md mt-1 inline-block shadow-sm">v{{ appVersion }}</span>
                 </div>
                 <div class="p-6 space-y-5">
-                    <!-- Theme Selector -->
                     <div>
                         <h4 class="text-[11px] font-bold theme-text-muted uppercase tracking-widest mb-3">ธีมสี (Theme)</h4>
                         <div class="grid grid-cols-3 gap-2">
@@ -245,15 +244,22 @@
             </div>
         </aside>
 
-        <!-- Main Content Area (มี Event ดักจับการ Scroll) -->
-        <main class="flex-1 overflow-y-auto relative flex flex-col h-full w-full custom-scroll" @scroll="handleMainScroll" :class="theme === 'dark' ? 'bg-gradient-to-br from-slate-900 to-slate-800' : (theme === 'eyecare' ? 'bg-gradient-to-br from-[#fbf6ec] to-[#f4ead5]' : 'bg-gradient-to-br from-slate-50 to-[#eef2f6]')">
-            <div class="p-4 md:p-6 w-full max-w-[1600px] mx-auto flex-grow flex flex-col gap-6 relative z-10">
+        <!-- Main Content Area -->
+        <main class="flex-1 relative flex flex-col h-full w-full" 
+              @scroll="handleMainScroll"
+              :class="[
+                theme === 'dark' ? 'bg-gradient-to-br from-slate-900 to-slate-800' : (theme === 'eyecare' ? 'bg-gradient-to-br from-[#fbf6ec] to-[#f4ead5]' : 'bg-gradient-to-br from-slate-50 to-[#eef2f6]'),
+                ['dashboard', 'report_list'].includes(page) ? 'overflow-hidden' : 'overflow-y-auto custom-scroll'
+              ]">
+            <div class="p-4 md:p-6 w-full max-w-[1600px] mx-auto flex-1 flex flex-col gap-4 relative z-10" :class="['dashboard', 'report_list'].includes(page) ? 'h-full min-h-0' : ''">
                 
                 <transition name="slide-fade" mode="out-in">
                 
                 <!-- Dashboard -->
-                <div v-if="page === 'dashboard'" key="dashboard" class="flex flex-col gap-5 h-full">
-                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 liquid-glass p-5 rounded-2xl">
+                <div v-if="page === 'dashboard'" key="dashboard" class="flex flex-col gap-4 h-full overflow-hidden">
+                    
+                    <!-- ส่วนหัวตาราง (ตรึง) -->
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 liquid-glass p-4 rounded-2xl shrink-0">
                         <div>
                             <h2 class="text-2xl font-black theme-text">ภาพรวมการดำเนินงาน</h2>
                             <p class="theme-text-muted text-sm font-medium">ปีงบประมาณ {{ config.selectedYear }}</p>
@@ -268,41 +274,42 @@
                         </div>
                     </div>
 
-                    <div v-show="isDashboardTopOpen" class="grid grid-cols-1 lg:grid-cols-12 gap-5 animate-slide-up origin-top">
+                    <!-- ส่วนสถิติแบบเต็ม -->
+                    <div v-show="isDashboardTopOpen" class="grid grid-cols-1 lg:grid-cols-12 gap-4 shrink-0 animate-slide-up origin-top">
                         <!-- Summary Cards -->
-                        <div class="lg:col-span-3 flex flex-col gap-4">
-                            <div class="liquid-glass p-5 rounded-3xl relative overflow-hidden group hover:-translate-y-1 transition border-l-4 border-l-blue-500">
-                                <div class="relative z-10"><p class="theme-text-muted text-[11px] font-bold uppercase tracking-widest mb-1">สิ่งส่งตรวจทั้งหมด</p><h3 class="text-[36px] leading-none font-black text-blue-500">{{ stats.total }}</h3></div>
-                                <i class="ph ph-flask absolute right-5 bottom-5 text-4xl text-blue-500 opacity-20 group-hover:opacity-100 group-hover:scale-110 transition-all"></i>
+                        <div class="lg:col-span-3 flex flex-col gap-3">
+                            <div class="liquid-glass p-4 rounded-[1.25rem] relative overflow-hidden group hover:-translate-y-1 transition border-l-4 border-l-blue-500">
+                                <div class="relative z-10"><p class="theme-text-muted text-[11px] font-bold uppercase tracking-widest mb-0">สิ่งส่งตรวจทั้งหมด</p><h3 class="text-3xl leading-none font-black text-blue-500 mt-1">{{ stats.total }}</h3></div>
+                                <i class="ph ph-flask absolute right-4 bottom-3 text-4xl text-blue-500 opacity-20 group-hover:opacity-100 group-hover:scale-110 transition-all"></i>
                             </div>
-                            <div class="liquid-glass p-5 rounded-3xl relative overflow-hidden group hover:-translate-y-1 transition border-l-4 border-l-emerald-500">
-                                <div class="relative z-10"><p class="theme-text-muted text-[11px] font-bold uppercase tracking-widest mb-1">รายงานผลแล้ว</p><h3 class="text-[36px] leading-none font-black text-emerald-500">{{ stats.reported }}</h3></div>
-                                <i class="ph ph-check-circle absolute right-5 bottom-5 text-4xl text-emerald-500 opacity-20 group-hover:opacity-100 group-hover:scale-110 transition-all"></i>
+                            <div class="liquid-glass p-4 rounded-[1.25rem] relative overflow-hidden group hover:-translate-y-1 transition border-l-4 border-l-emerald-500">
+                                <div class="relative z-10"><p class="theme-text-muted text-[11px] font-bold uppercase tracking-widest mb-0">รายงานผลแล้ว</p><h3 class="text-3xl leading-none font-black text-emerald-500 mt-1">{{ stats.reported }}</h3></div>
+                                <i class="ph ph-check-circle absolute right-4 bottom-3 text-4xl text-emerald-500 opacity-20 group-hover:opacity-100 group-hover:scale-110 transition-all"></i>
                             </div>
-                            <div class="liquid-glass p-5 rounded-3xl relative overflow-hidden group hover:-translate-y-1 transition border-l-4 border-l-orange-500">
-                                <div class="relative z-10"><p class="theme-text-muted text-[11px] font-bold uppercase tracking-widest mb-1">รอรายงานผล</p><h3 class="text-[36px] leading-none font-black text-orange-500">{{ stats.total - stats.reported }}</h3></div>
-                                <i class="ph ph-clock absolute right-5 bottom-5 text-4xl text-orange-500 opacity-20 group-hover:opacity-100 group-hover:scale-110 transition-all"></i>
+                            <div class="liquid-glass p-4 rounded-[1.25rem] relative overflow-hidden group hover:-translate-y-1 transition border-l-4 border-l-orange-500">
+                                <div class="relative z-10"><p class="theme-text-muted text-[11px] font-bold uppercase tracking-widest mb-0">รอรายงานผล</p><h3 class="text-3xl leading-none font-black text-orange-500 mt-1">{{ stats.total - stats.reported }}</h3></div>
+                                <i class="ph ph-clock absolute right-4 bottom-3 text-4xl text-orange-500 opacity-20 group-hover:opacity-100 group-hover:scale-110 transition-all"></i>
                             </div>
                         </div>
 
                         <!-- Charts -->
-                        <div class="lg:col-span-4 liquid-glass p-6 rounded-3xl flex flex-col items-center justify-center relative min-h-[250px]">
-                            <h3 class="font-bold theme-text text-sm absolute top-5 left-6 w-full flex justify-between pr-10">
+                        <div class="lg:col-span-4 liquid-glass p-4 rounded-3xl flex flex-col items-center justify-center relative min-h-[200px]">
+                            <h3 class="font-bold theme-text text-sm absolute top-4 left-5 w-full flex justify-between pr-10">
                                 <span>ความคืบหน้าภาพรวม</span>
                                 <span class="text-indigo-500">{{ progressPercent }}%</span>
                             </h3>
-                            <div class="w-full h-36 mt-6 relative">
+                            <div class="w-full h-32 mt-4 relative">
                                 <canvas id="statusChart"></canvas>
                             </div>
                             
                             <!-- TAT Ratio Overlay -->
-                            <div class="w-full mt-4 pt-4 border-t theme-border flex justify-between items-center px-2">
+                            <div class="w-full mt-3 pt-3 border-t theme-border flex justify-between items-center px-2">
                                 <div class="text-center">
                                     <span class="text-[10px] theme-text-muted font-bold block">ในเกณฑ์ TAT ({{tatOverview.percentOnTime}}%)</span>
                                     <span class="text-emerald-500 font-black text-lg">{{ tatOverview.onTime }}</span>
                                 </div>
                                 <div class="flex-1 px-4 flex items-center justify-center">
-                                     <div class="w-full bg-slate-200/50 rounded-full h-3 flex overflow-hidden shadow-inner">
+                                     <div class="w-full bg-slate-200/50 rounded-full h-2 flex overflow-hidden shadow-inner">
                                         <div class="bg-gradient-to-r from-emerald-400 to-emerald-500 h-full" :style="{ width: tatOverview.percentOnTime + '%' }"></div>
                                         <div class="bg-gradient-to-r from-rose-400 to-rose-500 h-full" :style="{ width: (100 - tatOverview.percentOnTime) + '%' }"></div>
                                     </div>
@@ -315,15 +322,15 @@
                         </div>
 
                         <!-- Status by Unit -->
-                        <div class="lg:col-span-5 liquid-glass p-6 rounded-3xl flex flex-col">
-                            <h3 class="font-bold theme-text text-sm mb-4">สถานะแบ่งตามหน่วยงาน</h3>
-                            <div class="flex-1 overflow-y-auto pr-3 space-y-4 max-h-[300px] custom-scroll">
+                        <div class="lg:col-span-5 liquid-glass p-4 rounded-3xl flex flex-col">
+                            <h3 class="font-bold theme-text text-sm mb-3">สถานะแบ่งตามหน่วยงาน</h3>
+                            <div class="flex-1 overflow-y-auto pr-3 space-y-3 max-h-[220px] custom-scroll">
                                 <div v-for="u in unitStats" :key="u.name" class="w-full">
                                     <div class="flex justify-between items-end mb-1">
                                         <span class="text-[13px] font-bold theme-text truncate max-w-[65%]">{{ u.name }}</span>
                                         <span class="text-xs font-bold theme-text-muted">{{ u.reported }} / {{ u.total }} <span class="text-[10px] opacity-70 font-normal">({{ Math.round((u.reported/u.total)*100) }}%)</span></span>
                                     </div>
-                                    <div class="w-full bg-black/5 rounded-full h-2 overflow-hidden flex shadow-inner">
+                                    <div class="w-full bg-black/5 rounded-full h-1.5 overflow-hidden flex shadow-inner">
                                         <div class="bg-gradient-to-r from-cyan-400 via-blue-500 to-indigo-500 h-full rounded-full transition-all duration-1000 ease-out" :style="{ width: (u.reported/u.total)*100 + '%' }"></div>
                                     </div>
                                 </div>
@@ -332,48 +339,53 @@
                         </div>
                     </div>
 
-                    <div v-show="!isDashboardTopOpen" class="liquid-glass p-4 rounded-2xl flex flex-wrap gap-6 items-center animate-slide-up">
-                        <div class="flex items-center gap-3 border-r theme-border pr-6"><div class="w-10 h-10 rounded-full bg-blue-500/10 text-blue-500 flex items-center justify-center"><i class="ph ph-flask text-xl"></i></div><div><p class="text-[10px] font-bold theme-text-muted uppercase">ทั้งหมด</p><p class="text-xl font-black theme-text leading-none">{{ stats.total }}</p></div></div>
-                        <div class="flex items-center gap-3 border-r theme-border pr-6"><div class="w-10 h-10 rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center"><i class="ph ph-check-circle text-xl"></i></div><div><p class="text-[10px] font-bold theme-text-muted uppercase">รายงานผลแล้ว</p><p class="text-xl font-black text-emerald-500 leading-none">{{ stats.reported }}</p></div></div>
-                        <div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-orange-500/10 text-orange-500 flex items-center justify-center"><i class="ph ph-clock text-xl"></i></div><div><p class="text-[10px] font-bold theme-text-muted uppercase">รอผล</p><p class="text-xl font-black text-orange-500 leading-none">{{ stats.total - stats.reported }}</p></div></div>
+                    <!-- ส่วนสถิติแบบย่อ (ตรึง) -->
+                    <div v-show="!isDashboardTopOpen" class="liquid-glass p-3 rounded-2xl flex flex-wrap gap-4 items-center shrink-0 animate-slide-up">
+                        <div class="flex items-center gap-3 border-r theme-border pr-4"><div class="w-8 h-8 rounded-full bg-blue-500/10 text-blue-500 flex items-center justify-center"><i class="ph ph-flask text-lg"></i></div><div><p class="text-[9px] font-bold theme-text-muted uppercase">ทั้งหมด</p><p class="text-lg font-black theme-text leading-none mt-0.5">{{ stats.total }}</p></div></div>
+                        <div class="flex items-center gap-3 border-r theme-border pr-4"><div class="w-8 h-8 rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center"><i class="ph ph-check-circle text-lg"></i></div><div><p class="text-[9px] font-bold theme-text-muted uppercase">รายงานผลแล้ว</p><p class="text-lg font-black text-emerald-500 leading-none mt-0.5">{{ stats.reported }}</p></div></div>
+                        <div class="flex items-center gap-3"><div class="w-8 h-8 rounded-full bg-orange-500/10 text-orange-500 flex items-center justify-center"><i class="ph ph-clock text-lg"></i></div><div><p class="text-[9px] font-bold theme-text-muted uppercase">รอผล</p><p class="text-lg font-black text-orange-500 leading-none mt-0.5">{{ stats.total - stats.reported }}</p></div></div>
                         <div class="ml-auto w-48 hidden sm:block">
-                            <div class="flex justify-between text-[10px] font-bold theme-text-muted mb-1"><span>Progress</span><span>{{ progressPercent }}%</span></div>
+                            <div class="flex justify-between text-[10px] font-bold theme-text-muted mb-0.5"><span>Progress</span><span>{{ progressPercent }}%</span></div>
                             <div class="w-full bg-black/5 rounded-full h-1.5 overflow-hidden"><div class="bg-gradient-to-r from-indigo-500 to-purple-500 h-full rounded-full" :style="{ width: progressPercent + '%' }"></div></div>
                         </div>
                     </div>
 
                     <!-- Filter & Table List -->
-                    <div class="liquid-glass rounded-3xl flex flex-col flex-grow min-h-[400px] overflow-hidden">
-                        <div class="p-5 border-b theme-border bg-black/5 flex flex-col lg:flex-row gap-4 lg:items-end">
-                            <div class="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                                <div><label class="label-sm">จากวันที่รับ</label><input v-model="dashDateStart" type="date" class="input-std font-medium"></div>
-                                <div><label class="label-sm">ถึงวันที่รับ</label><input v-model="dashDateEnd" type="date" class="input-std font-medium"></div>
+                    <div class="liquid-glass rounded-3xl flex flex-col flex-1 min-h-[300px] overflow-hidden">
+                        
+                        <!-- ชุดเครื่องมือค้นหา (ตรึง & ปรับลดช่องว่าง) -->
+                        <div class="py-3 px-4 border-b theme-border bg-black/5 flex flex-col lg:flex-row gap-3 lg:items-end shrink-0">
+                            <div class="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                                <div><label class="label-sm">จากวันที่รับ</label><input v-model="dashDateStart" type="date" class="input-std font-medium py-1.5"></div>
+                                <div><label class="label-sm">ถึงวันที่รับ</label><input v-model="dashDateEnd" type="date" class="input-std font-medium py-1.5"></div>
                                 <div class="relative">
                                     <label class="label-sm">หน่วยงาน</label>
-                                    <select v-model="unitFilter" class="input-std font-bold theme-text appearance-none">
+                                    <select v-model="unitFilter" class="input-std font-bold theme-text appearance-none py-1.5">
                                         <option value="All" class="font-black text-indigo-600 bg-indigo-50">✦ ทุกหน่วยงาน</option>
                                         <option v-for="u in masterUnits" :key="'duf-'+u" :value="u" class="theme-text font-medium">{{ u }}</option>
                                     </select>
-                                    <i class="ph ph-caret-down absolute right-3 top-9 text-slate-400 pointer-events-none"></i>
+                                    <i class="ph ph-caret-down absolute right-3 top-8 text-slate-400 pointer-events-none"></i>
                                 </div>
                                 <div class="relative">
                                     <label class="label-sm">ค้นหาอิสระ</label>
-                                    <div class="relative"><i class="ph ph-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-lg"></i><input v-model="searchQuery" type="text" placeholder="Cyto No, HN, ชื่อ..." class="input-std pl-10"></div>
+                                    <div class="relative"><i class="ph ph-magnifying-glass absolute left-3 top-2 text-slate-400 text-lg"></i><input v-model="searchQuery" type="text" placeholder="Cyto No, HN, ชื่อ..." class="input-std pl-10 py-1.5"></div>
                                 </div>
                             </div>
-                            <div class="flex flex-col gap-2 shrink-0 w-full lg:w-auto">
-                                <label class="label-sm hidden lg:block">&nbsp;</label>
+                            <div class="flex flex-col gap-1.5 shrink-0 w-full lg:w-auto">
                                 <div class="flex bg-[var(--bg-input)] p-1 rounded-xl border theme-border">
-                                    <button @click="statusFilter='All'" :class="['px-4 py-1.5 rounded-lg text-[13px] font-bold transition-colors flex-1 text-center', statusFilter==='All' ? 'bg-black/10 theme-text shadow-sm' : 'theme-text-muted hover:theme-text']">ทั้งหมด</button>
-                                    <button @click="statusFilter='Pending'" :class="['px-4 py-1.5 rounded-lg text-[13px] font-bold transition-colors flex-1 text-center', statusFilter==='Pending' ? 'bg-orange-500 text-white shadow-sm' : 'theme-text-muted hover:text-orange-500']">รอผล</button>
-                                    <button @click="statusFilter='Reported'" :class="['px-4 py-1.5 rounded-lg text-[13px] font-bold transition-colors flex-1 text-center', statusFilter==='Reported' ? 'bg-emerald-500 text-white shadow-sm' : 'theme-text-muted hover:text-emerald-500']">รายงานแล้ว</button>
+                                    <button @click="statusFilter='All'" :class="['px-3 py-1.5 rounded-lg text-[13px] font-bold transition-colors flex-1 text-center whitespace-nowrap', statusFilter==='All' ? 'bg-black/10 theme-text shadow-sm' : 'theme-text-muted hover:theme-text']">ทั้งหมด</button>
+                                    <button @click="statusFilter='Pending'" :class="['px-3 py-1.5 rounded-lg text-[13px] font-bold transition-colors flex-1 text-center whitespace-nowrap', statusFilter==='Pending' ? 'bg-orange-500 text-white shadow-sm' : 'theme-text-muted hover:text-orange-500']">รอผล</button>
+                                    <button @click="statusFilter='Reported'" :class="['px-3 py-1.5 rounded-lg text-[13px] font-bold transition-colors flex-1 text-center whitespace-nowrap', statusFilter==='Reported' ? 'bg-emerald-500 text-white shadow-sm' : 'theme-text-muted hover:text-emerald-500']">รายงานแล้ว</button>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="overflow-x-auto flex-grow relative bg-black/5">
+                        <!-- ตาราง (อนุญาตให้ Scroll เฉพาะส่วนนี้) -->
+                        <div class="overflow-x-auto overflow-y-auto flex-1 relative bg-black/5 custom-scroll" @scroll="handleTableScroll">
                             <table class="w-full text-left border-collapse">
-                                <thead class="text-[11px] theme-text-muted uppercase bg-[var(--bg-card)] border-b theme-border font-bold sticky top-0 z-10">
+                                <!-- เปลี่ยนหัวตารางเป็นสีทึบตามธีม เพื่อบังเนื้อหาด้านหลังเวลา Scroll -->
+                                <thead class="text-[11px] uppercase border-b theme-border font-bold sticky top-0 z-20 shadow-sm"
+                                       :class="theme === 'dark' ? 'bg-slate-800 text-slate-300' : (theme === 'eyecare' ? 'bg-[#f0e4cc] text-[#7a6a4f]' : 'bg-slate-200 text-slate-700')">
                                     <tr>
                                         <th class="px-5 py-2.5 whitespace-nowrap">Cyto No</th>
                                         <th class="px-5 py-2.5 whitespace-nowrap">HN</th>
@@ -386,13 +398,12 @@
                                 </thead>
                                 <tbody v-if="isDataLoading"><tr v-for="n in 5" :key="'load-'+n"><td colspan="7" class="px-5 py-4 border-b theme-border"><div class="h-4 bg-black/10 rounded-full animate-pulse"></div></td></tr></tbody>
                                 <tbody v-else>
-                                    <tr v-for="(p, index) in filteredPatients" :key="'pat-'+index" class="border-b theme-border transition bg-transparent theme-row-hover">
+                                    <tr v-for="(p, index) in filteredPatients" :key="'pat-'+index" class="border-b theme-border transition bg-transparent theme-row-hover relative z-0">
                                         <td class="px-5 py-2.5 font-mono font-bold text-indigo-500 text-[14px]">{{ p.cytoNo }}</td>
                                         <td class="px-5 py-2.5 theme-text font-medium text-[14px]">{{ p.hn }}</td>
                                         <td class="px-5 py-2.5 font-bold theme-text whitespace-nowrap text-[14px]"><span class="text-[11px] theme-text-muted font-normal mr-1">{{ p.prefix }}</span>{{ p.fname }} {{ p.lname }}</td>
                                         <td class="px-5 py-2.5 theme-text truncate max-w-[150px] font-medium text-[13px]" :title="p.unit">{{ p.unit }}</td>
                                         <td class="px-5 py-2.5 align-middle">
-                                            <!-- รูปแบบ TAT อิงตามที่คุณชอบ -->
                                             <div class="w-full min-w-[120px] max-w-[150px] mx-auto bg-[var(--border-color)] rounded-full h-3.5 flex items-center p-[2px] shadow-inner relative overflow-hidden" :title="'ใช้เวลาไป ' + getTAT(p).days + ' วัน'">
                                                 <div class="h-full rounded-full transition-all duration-1000 ease-out animate-energy-bar" :class="getTAT(p).colorClass" :style="{ width: getTAT(p).percent + '%' }"></div>
                                                 <div v-if="getTAT(p).percent >= 100" class="absolute inset-0 bg-red-500/30 animate-pulse"></div>
@@ -547,55 +558,62 @@
                 </div>
 
                 <!-- Report List -->
-                <div v-else-if="page === 'report_list'" key="report_list" class="flex flex-col gap-5 h-full animate-slide-up">
-                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 liquid-glass p-5 rounded-2xl">
+                <div v-else-if="page === 'report_list'" key="report_list" class="flex flex-col gap-4 h-full animate-slide-up overflow-hidden">
+                    
+                    <!-- ส่วนหัวหน้า (ตรึง) -->
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 liquid-glass p-4 rounded-2xl shrink-0">
                         <div>
                             <h2 class="text-2xl font-black theme-text">รายงานผลทางเซลล์วิทยา (Cytology Report)</h2>
                             <p class="theme-text-muted text-sm font-medium mt-1">ปีงบประมาณ {{ config.selectedYear }}</p>
                         </div>
                     </div>
                     
-                    <div class="liquid-glass rounded-3xl flex flex-col flex-grow min-h-[500px] overflow-hidden">
-                        <div class="p-5 border-b theme-border bg-black/5 flex flex-col lg:flex-row gap-4 lg:items-end">
-                            <div class="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                                <div><label class="label-sm">จากวันที่รับ</label><input v-model="ui.reportDateStart" type="date" class="input-std focus:ring-2 focus:ring-emerald-400 font-medium"></div>
-                                <div><label class="label-sm">ถึงวันที่รับ</label><input v-model="ui.reportDateEnd" type="date" class="input-std focus:ring-2 focus:ring-emerald-400 font-medium"></div>
+                    <!-- Filter & Table List -->
+                    <div class="liquid-glass rounded-3xl flex flex-col flex-1 min-h-[300px] overflow-hidden">
+                        
+                        <!-- ชุดเครื่องมือค้นหา (ตรึง) -->
+                        <div class="py-3 px-4 border-b theme-border bg-black/5 flex flex-col lg:flex-row gap-3 lg:items-end shrink-0">
+                            <div class="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                                <div><label class="label-sm">จากวันที่รับ</label><input v-model="ui.reportDateStart" type="date" class="input-std focus:ring-2 focus:ring-emerald-400 font-medium py-1.5"></div>
+                                <div><label class="label-sm">ถึงวันที่รับ</label><input v-model="ui.reportDateEnd" type="date" class="input-std focus:ring-2 focus:ring-emerald-400 font-medium py-1.5"></div>
                                 <div class="relative">
                                     <label class="label-sm">หน่วยงาน</label>
-                                    <select v-model="unitFilter" class="input-std focus:ring-2 focus:ring-emerald-400 appearance-none font-bold">
+                                    <select v-model="unitFilter" class="input-std focus:ring-2 focus:ring-emerald-400 appearance-none font-bold py-1.5">
                                         <option value="All" class="font-black text-indigo-600 bg-indigo-50">✦ ทุกหน่วยงาน</option>
                                         <option v-for="u in masterUnits" :key="'ru-'+u" :value="u" class="theme-text font-medium">{{ u }}</option>
                                     </select>
-                                    <i class="ph ph-caret-down absolute right-3 top-9 text-slate-400 pointer-events-none"></i>
+                                    <i class="ph ph-caret-down absolute right-3 top-8 text-slate-400 pointer-events-none"></i>
                                 </div>
                                 <div class="relative">
                                     <label class="label-sm">ค้นหาอิสระ</label>
-                                    <div class="relative"><i class="ph ph-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-lg"></i><input v-model="ui.reportSearch" type="text" placeholder="Cyto No, HN, ชื่อ..." class="input-std focus:ring-2 focus:ring-emerald-400 pl-10"></div>
+                                    <div class="relative"><i class="ph ph-magnifying-glass absolute left-3 top-2 text-slate-400 text-lg"></i><input v-model="ui.reportSearch" type="text" placeholder="Cyto No, HN, ชื่อ..." class="input-std focus:ring-2 focus:ring-emerald-400 pl-10 py-1.5"></div>
                                 </div>
                             </div>
-                            <div class="flex flex-col gap-2 shrink-0 w-full lg:w-auto">
-                                <label class="label-sm hidden lg:block">&nbsp;</label>
+                            <div class="flex flex-col gap-1.5 shrink-0 w-full lg:w-auto">
                                 <div class="flex bg-[var(--bg-input)] p-1 rounded-xl border theme-border">
-                                    <button @click="statusFilter='All'" :class="['px-4 py-1.5 rounded-lg text-[13px] font-bold transition-colors flex-1 text-center', statusFilter==='All' ? 'bg-black/10 theme-text shadow-sm' : 'theme-text-muted hover:theme-text']">ทั้งหมด</button>
-                                    <button @click="statusFilter='Pending'" :class="['px-4 py-1.5 rounded-lg text-[13px] font-bold transition-colors flex-1 text-center', statusFilter==='Pending' ? 'bg-orange-500 text-white shadow-sm' : 'theme-text-muted hover:text-orange-500']">รอผล</button>
-                                    <button @click="statusFilter='Reported'" :class="['px-4 py-1.5 rounded-lg text-[13px] font-bold transition-colors flex-1 text-center', statusFilter==='Reported' ? 'bg-emerald-500 text-white shadow-sm' : 'theme-text-muted hover:text-emerald-500']">รายงานแล้ว</button>
+                                    <button @click="statusFilter='All'" :class="['px-3 py-1.5 rounded-lg text-[13px] font-bold transition-colors flex-1 text-center whitespace-nowrap', statusFilter==='All' ? 'bg-black/10 theme-text shadow-sm' : 'theme-text-muted hover:theme-text']">ทั้งหมด</button>
+                                    <button @click="statusFilter='Pending'" :class="['px-3 py-1.5 rounded-lg text-[13px] font-bold transition-colors flex-1 text-center whitespace-nowrap', statusFilter==='Pending' ? 'bg-orange-500 text-white shadow-sm' : 'theme-text-muted hover:text-orange-500']">รอผล</button>
+                                    <button @click="statusFilter='Reported'" :class="['px-3 py-1.5 rounded-lg text-[13px] font-bold transition-colors flex-1 text-center whitespace-nowrap', statusFilter==='Reported' ? 'bg-emerald-500 text-white shadow-sm' : 'theme-text-muted hover:text-emerald-500']">รายงานแล้ว</button>
                                 </div>
                             </div>
                         </div>
-                        <div class="overflow-x-auto overflow-y-auto flex-grow relative bg-black/5">
+
+                        <!-- ตาราง (อนุญาตให้ Scroll เฉพาะส่วนนี้) -->
+                        <div class="overflow-x-auto overflow-y-auto flex-1 relative bg-black/5 custom-scroll">
                             <table class="w-full text-left border-collapse">
-                                <thead class="text-[11px] theme-text-muted uppercase bg-[var(--bg-card)] border-b theme-border font-bold sticky top-0 z-10">
+                                <!-- เปลี่ยนหัวตารางเป็นสีทึบตามธีม เพื่อบังเนื้อหาด้านหลังเวลา Scroll -->
+                                <thead class="text-[11px] uppercase border-b theme-border font-bold sticky top-0 z-20 shadow-sm"
+                                       :class="theme === 'dark' ? 'bg-slate-800 text-slate-300' : (theme === 'eyecare' ? 'bg-[#f0e4cc] text-[#7a6a4f]' : 'bg-slate-200 text-slate-700')">
                                     <tr><th class="px-5 py-2.5 whitespace-nowrap">Cyto No</th><th class="px-5 py-2.5 whitespace-nowrap">HN</th><th class="px-5 py-2.5 whitespace-nowrap">ชื่อ-สกุล</th><th class="px-5 py-2.5 whitespace-nowrap">หน่วยงาน</th><th class="px-5 py-2.5 whitespace-nowrap text-center">TAT (14 days)</th><th class="px-5 py-2.5 whitespace-nowrap text-center">สถานะ</th><th class="px-5 py-2.5 whitespace-nowrap text-center">จัดการ</th></tr>
                                 </thead>
                                 <tbody v-if="isDataLoading"><tr v-for="n in 5" :key="'load-'+n"><td colspan="7" class="px-5 py-4 border-b theme-border"><div class="h-4 bg-black/10 rounded-full animate-pulse"></div></td></tr></tbody>
                                 <tbody v-else>
-                                    <tr v-for="(p, index) in filteredReportPatients" :key="'rpat-'+index" class="border-b theme-border transition bg-transparent theme-row-hover">
+                                    <tr v-for="(p, index) in filteredReportPatients" :key="'rpat-'+index" class="border-b theme-border transition bg-transparent theme-row-hover relative z-0">
                                         <td class="px-5 py-2.5 font-mono font-bold text-emerald-500 text-[14px]">{{ p.cytoNo }}</td>
                                         <td class="px-5 py-2.5 theme-text font-medium text-[14px]">{{ p.hn }}</td>
                                         <td class="px-5 py-2.5 font-bold theme-text whitespace-nowrap text-[14px]"><span class="text-[11px] theme-text-muted font-normal mr-1">{{ p.prefix }}</span> {{ p.fname }} {{ p.lname }}</td>
                                         <td class="px-5 py-2.5 theme-text truncate max-w-[150px] font-medium text-[13px]" :title="p.unit">{{ p.unit }}</td>
                                         <td class="px-5 py-2.5 align-middle">
-                                            <!-- รูปแบบ TAT อิงตามที่คุณชอบ -->
                                             <div class="w-full min-w-[120px] max-w-[150px] mx-auto bg-[var(--border-color)] rounded-full h-3.5 flex items-center p-[2px] shadow-inner relative overflow-hidden" :title="'ใช้เวลาไป ' + getTAT(p).days + ' วัน'">
                                                 <div class="h-full rounded-full transition-all duration-1000 ease-out animate-energy-bar" :class="getTAT(p).colorClass" :style="{ width: getTAT(p).percent + '%' }"></div>
                                                 <div v-if="getTAT(p).percent >= 100" class="absolute inset-0 bg-red-500/30 animate-pulse"></div>
@@ -641,7 +659,6 @@
                             <div class="flex items-center gap-3 w-full overflow-hidden pr-2">
                                 <h3 v-if="ui.showPatientInfo" class="font-black theme-text flex items-center gap-2 text-base shrink-0"><i class="ph ph-user-circle text-xl text-indigo-500"></i> ข้อมูลผู้ป่วย (Patient Info)</h3>
                                 
-                                <!-- Summary when collapsed (ปรับปรุงตามต้องการ) -->
                                 <div v-show="!ui.showPatientInfo" class="hidden sm:flex items-center ml-4 text-[13px] animate-slide-up border-l theme-border pl-4 gap-4 overflow-x-auto whitespace-nowrap">
                                     <span class="bg-emerald-500/10 text-emerald-600 font-black px-2.5 py-1 rounded-md border border-emerald-500/20 shadow-sm shrink-0"><i class="ph ph-identification-badge mr-1"></i>{{ formReport.patient.cytoNo }}</span>
                                     <span class="theme-text font-black text-[15px] shrink-0"><span class="text-[11px] font-normal theme-text-muted mr-1">{{ formReport.patient.prefix }}</span>{{ formReport.patient.fname }} {{ formReport.patient.lname }}</span>
