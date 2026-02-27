@@ -1,5 +1,5 @@
 // --- CONFIGURATION ---
-const MASTER_SHEET_ID = 'xxxxx'; // โปรดระบุ ID ของคุณ (แก้ไขให้ตรงกับของคุณด้วยนะครับ)
+const MASTER_SHEET_ID = 'XXXXX'; // โปรดระบุ ID ของคุณ (แก้ไขให้ตรงกับของคุณด้วยนะครับ)
 
 function doGet() {
   return HtmlService.createTemplateFromFile('index')
@@ -155,7 +155,15 @@ function apiLoginStep1(username, password) {
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
         CacheService.getScriptCache().put("OTP_" + username, otp, 300);
 
-        try { MailApp.sendEmail({ to: email, subject: "รหัส OTP สำหรับเข้าสู่ระบบ CytoFlow", htmlBody: `<h2>รหัส OTP ของคุณคือ: <span style="color:blue; font-size:24px;">${otp}</span></h2>` }); } 
+        try { 
+          // --- CHANGED: Added name parameter to show "CytoFlow" instead of default email name ---
+          MailApp.sendEmail({ 
+            to: email, 
+            subject: "รหัส OTP สำหรับเข้าสู่ระบบ CytoFlow", 
+            htmlBody: `<h2>รหัส OTP ของคุณคือ: <span style="color:blue; font-size:24px;">${otp}</span></h2>`,
+            name: "CytoFlow"
+          }); 
+        } 
         catch (mailErr) { return { status: 'error', message: 'ส่งอีเมล OTP ไม่สำเร็จ: ' + mailErr.message }; }
 
         const maskedEmail = email.replace(/^(.)(.*)(.@.*)$/, "$1***$3");
