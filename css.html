@@ -74,25 +74,25 @@
       border-right: 1px solid var(--border-color);
   }
 
-  /* Inputs & Labels (ปรับความสูงให้เตี้ยลงตามคำขอ) */
+  /* --- CHANGED: Inputs & Labels (ปรับให้คอมแพคขึ้น เตี้ยลง ลดระยะห่าง) --- */
   .label-sm { 
       display: block; 
-      font-size: 0.85rem; 
+      font-size: 0.8rem; /* ลดจาก 0.85rem เล็กน้อย */
       font-weight: 700; 
       color: var(--text-muted); 
-      margin-bottom: 0.15rem; /* ลดระยะห่างด้านล่าง */
+      margin-bottom: 0.1rem; /* ลดระยะห่าง */
   }
   .input-std { 
       width: 100%; 
       border: 1px solid var(--border-input); 
-      padding: 0.4rem 0.65rem; /* ลด Padding บนล่าง เพื่อให้กล่องเตี้ยลง แต่ตัวหนังสือเท่าเดิม */
-      border-radius: 0.6rem;
-      font-size: 0.95rem; 
+      padding: 0.25rem 0.5rem; /* ลด Padding บนล่าง เพื่อให้กล่องเตี้ยลง */
+      border-radius: 0.5rem; /* ลดความมนลงนิดหน่อยให้รับกับกล่องเตี้ย */
+      font-size: 0.85rem; /* ลดขนาดตัวอักษรลงนิดนึงเพื่อให้พอดีกล่อง */
       outline: none; 
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
       background: var(--bg-input);
       color: var(--text-main);
-      min-height: 38px; /* กำหนดความสูงขั้นต่ำให้เป็นระเบียบ */
+      min-height: 32px; /* กำหนดความสูงให้เตี้ยลง (เดิม 38px) */
   }
   .input-std:focus {
       transform: translateY(-1px);
@@ -108,7 +108,7 @@
   }
 
   /* Table Adjustments */
-  th.py-2\.5, td.py-2\.5 { padding-top: 0.625rem; padding-bottom: 0.625rem; }
+  th.py-2\.5, td.py-2\.5 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
 
   /* Transitions & Animations */
   .fade-enter-active, .fade-leave-active { transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
