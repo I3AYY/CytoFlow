@@ -4,7 +4,7 @@ const MASTER_SHEET_ID = 'XXXXX'; // โปรดระบุ ID ของคุ�
 function doGet() {
   return HtmlService.createTemplateFromFile('index')
     .evaluate()
-    .setTitle('CytoFlow 2026 (v1.1.0 AI Edition)')
+    .setTitle('CytoFlow 2026 (v1.2.0 AI Edition)')
     .addMetaTag('viewport', 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no')
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
