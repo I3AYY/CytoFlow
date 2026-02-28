@@ -792,11 +792,55 @@
                             <!-- Box 2 -->
                             <div class="p-3 md:p-4 border-b theme-border bg-violet-500/5 h-full flex flex-col">
                                 <h3 class="font-black text-violet-600 mb-3 text-[15px] border-l-[3px] border-violet-500 pl-2">2. GENERAL CATEGORIZATION</h3>
-                                <div class="space-y-2.5 flex-1">
-                                    <div>
-                                        <div class="flex justify-between items-center mb-1"><label class="label-sm">100 NEGATIVE FOR INTRAEPITHELIAL LESION OR MALIGNANCY</label><span class="bg-amber-500/10 text-amber-600 text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded border border-amber-500/20">Dev</span></div>
-                                        <input type="text" disabled class="input-std bg-black/5 border-dashed border-2 cursor-not-allowed">
+                                <div class="space-y-3 flex-1">
+                                    
+                                    <!-- NEW: 100 NEGATIVE FOR INTRAEPITHELIAL LESION OR MALIGNANCY -->
+                                    <div class="border theme-border rounded-xl p-3 bg-[var(--bg-card)] shadow-sm relative overflow-visible">
+                                        <div class="flex items-center mb-2">
+                                            <label class="text-[12px] font-black text-violet-700 tracking-tight">100 NEGATIVE FOR INTRAEPITHELIAL LESION OR MALIGNANCY</label>
+                                        </div>
+                                        <div class="space-y-3">
+                                            
+                                            <!-- Sub 1: Organism -->
+                                            <div class="relative organism-dropdown">
+                                                <label class="label-sm text-[11px] mb-1">Organism</label>
+                                                <div @click="!viewMode && (ui.showOrganismList = !ui.showOrganismList)" class="input-std font-medium focus:ring-2 focus:ring-violet-500 min-h-[32px] flex flex-wrap gap-1.5 items-center relative" :class="viewMode ? 'cursor-not-allowed bg-black/5' : 'cursor-pointer'">
+                                                    <span v-if="formReport.organismSelections.length === 0" class="text-slate-400 font-normal">ไม่ได้ระบุ...</span>
+                                                    <span v-for="(item, idx) in formReport.organismSelections" :key="'os-'+idx" class="bg-violet-500/10 text-violet-600 px-1.5 py-0.5 rounded text-[11px] flex items-center gap-1 font-bold border border-violet-500/20 shadow-sm">
+                                                        {{ item }} <i v-if="!viewMode" class="ph ph-x cursor-pointer hover:text-violet-800 ml-1 font-bold" @click.stop="toggleOrganism(item)"></i>
+                                                    </span>
+                                                    <i v-if="!viewMode" class="ph ph-caret-down absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></i>
+                                                </div>
+                                                <ul v-show="ui.showOrganismList" class="absolute z-30 w-full bg-[var(--bg-input)] border theme-border shadow-xl max-h-48 overflow-y-auto rounded-xl mt-1 backdrop-blur-md">
+                                                    <li v-for="(org, idx) in masterOrganism" :key="'mo-'+idx" class="px-3 py-2 hover:bg-black/5 cursor-pointer text-[13px] theme-text flex items-center border-b theme-border font-medium">
+                                                        <input type="checkbox" :value="org" v-model="formReport.organismSelections" class="mr-3 text-violet-500 focus:ring-violet-500 rounded cursor-pointer w-4 h-4">
+                                                        <span @click.prevent="toggleOrganism(org)" class="flex-1">{{ org }}</span>
+                                                    </li>
+                                                </ul>
+                                                <input v-if="formReport.organismSelections.includes('109 Other organism')" v-model="formReport.organismOtherText" type="text" class="input-std font-medium focus:ring-2 focus:ring-violet-400 mt-1.5 animate-slide-up" placeholder="ระบุชนิด Organism อื่นๆ (บังคับ)..." :disabled="viewMode" required>
+                                            </div>
+
+                                            <!-- Sub 2: Other non neoplastic -->
+                                            <div class="relative nonneo-dropdown">
+                                                <label class="label-sm text-[11px] mb-1">Other non neoplastic finding Reactive cellular changes associated with</label>
+                                                <div @click="!viewMode && (ui.showNonNeoList = !ui.showNonNeoList)" class="input-std font-medium focus:ring-2 focus:ring-violet-500 min-h-[32px] flex flex-wrap gap-1.5 items-center relative" :class="viewMode ? 'cursor-not-allowed bg-black/5' : 'cursor-pointer'">
+                                                    <span v-if="formReport.nonNeoSelections.length === 0" class="text-slate-400 font-normal">ไม่ได้ระบุ...</span>
+                                                    <span v-for="(item, idx) in formReport.nonNeoSelections" :key="'ns-'+idx" class="bg-violet-500/10 text-violet-600 px-1.5 py-0.5 rounded text-[11px] flex items-center gap-1 font-bold border border-violet-500/20 shadow-sm">
+                                                        {{ item }} <i v-if="!viewMode" class="ph ph-x cursor-pointer hover:text-violet-800 ml-1 font-bold" @click.stop="toggleNonNeo(item)"></i>
+                                                    </span>
+                                                    <i v-if="!viewMode" class="ph ph-caret-down absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></i>
+                                                </div>
+                                                <ul v-show="ui.showNonNeoList" class="absolute z-20 w-full bg-[var(--bg-input)] border theme-border shadow-xl max-h-48 overflow-y-auto rounded-xl mt-1 backdrop-blur-md">
+                                                    <li v-for="(nn, idx) in masterNonNeo" :key="'mnn-'+idx" class="px-3 py-2 hover:bg-black/5 cursor-pointer text-[13px] theme-text flex items-center border-b theme-border font-medium">
+                                                        <input type="checkbox" :value="nn" v-model="formReport.nonNeoSelections" class="mr-3 text-violet-500 focus:ring-violet-500 rounded cursor-pointer w-4 h-4">
+                                                        <span @click.prevent="toggleNonNeo(nn)" class="flex-1">{{ nn }}</span>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
                                     </div>
+                                    <!-- END NEW -->
+
                                     <div>
                                         <div class="flex justify-between items-center mb-1"><label class="label-sm">200 EPITHELIAL CELLS ABNORMALITIES</label><span class="bg-amber-500/10 text-amber-600 text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded border border-amber-500/20">Dev</span></div>
                                         <input type="text" disabled class="input-std bg-black/5 border-dashed border-2 cursor-not-allowed">
