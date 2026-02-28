@@ -156,7 +156,6 @@ function apiLoginStep1(username, password) {
         CacheService.getScriptCache().put("OTP_" + username, otp, 300);
 
         try { 
-          // --- CHANGED: Added name parameter to show "CytoFlow" instead of default email name ---
           MailApp.sendEmail({ 
             to: email, 
             subject: "รหัส OTP สำหรับเข้าสู่ระบบ CytoFlow", 
@@ -197,7 +196,7 @@ function apiVerifyOtp(username, inputOtp) {
   } catch (e) { return { status: 'error', message: 'Verify Error: ' + e.message }; }
 }
 
-// --- NEW API: VERIFY PASSWORD FOR LOCK SCREEN ---
+// --- API: VERIFY PASSWORD FOR LOCK SCREEN ---
 function apiVerifyPassword(username, password) {
   try {
     const sheet = SpreadsheetApp.openById(MASTER_SHEET_ID).getSheetByName('Users');
@@ -238,6 +237,10 @@ function apiGetDashboardData(year) {
           
           regTimestamp: formatDateTimeVal(r[25]),
           adequacy: r[26], adequacyDetail: r[27], additional: r[28], 
+          
+          // เพิ่มการดึงข้อมูล Organism (Col AD=29) และ Non-neoplastic (Col AE=30)
+          organism: r[29] ? String(r[29]) : "",
+          nonNeo: r[30] ? String(r[30]) : "",
           
           cat300: r[36], comment: r[37], 
           
@@ -313,9 +316,13 @@ function apiSubmitReport(form, year, username) {
     const sheet = getDbSheet(year);
     const row = parseInt(form.rowId);
     
-    sheet.getRange(row, 27).setValue(form.adequacy);       
-    sheet.getRange(row, 28).setValue(form.adequacyDetail); 
-    sheet.getRange(row, 29).setValue(form.additional);     
+    sheet.getRange(row, 27).setValue(form.adequacy);       // Col AA
+    sheet.getRange(row, 28).setValue(form.adequacyDetail); // Col AB
+    sheet.getRange(row, 29).setValue(form.additional);     // Col AC
+    
+    // บันทึกข้อมูลหมวด 100 Negative
+    sheet.getRange(row, 30).setValue(form.organism);       // Col AD
+    sheet.getRange(row, 31).setValue(form.nonNeo);         // Col AE
     
     sheet.getRange(row, 37).setValue(form.cat300);         
     sheet.getRange(row, 38).setValue(form.comment);        
