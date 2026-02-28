@@ -18,7 +18,7 @@ const app = createApp({
         const loginStep = ref(1);
         const otpInput = ref('');
         const otpMessage = ref('');
-        const appVersion = "1.1.0 AI Edition";
+        const appVersion = "1.2.0 AI Edition";
         
         // --- Security / Lock Screen ---
         const isLocked = ref(false);
@@ -56,6 +56,10 @@ const app = createApp({
         const masterPathos = ref([]);
         const masterContras = ['ไม่ใช้ฮอร์โมน/ไม่คุมกำเนิด', 'กินยาคุมกำเนิด', 'ฉีดยาคุมกำเนิด', 'ทำหมัน', 'ฝังยาคุมกำเนิด', 'ใส่ห่วงคุมกำเนิด', 'ถุงยางอนามัย', 'อื่นๆ (ระบุ)'];
         const masterPrevTx = ['Not treatment', 'Surgery', 'Radiation', 'Chemotherapy', 'Hormone', 'อื่น ๆ (ระบุ)'];
+        
+        // เพิ่ม Master Data สำหรับส่วน Report
+        const masterOrganism = ['101 Trichomonas spp.', '102 Candida spp.', '103 Bacterial vaginosis', '104 Actinomyces app.', '105 HSV', '109 Other organism'];
+        const masterNonNeo = ['121 Inflammation', '122 Radiation', '123 IUD', '124 Glandular cells status post hysterectomy', '125 Atrophy'];
 
         const unitFilter = ref('All'); 
         const searchQuery = ref('');
@@ -83,12 +87,15 @@ const app = createApp({
             lmpType: 'ระบุวันที่', lmpDate: '',
             reportDateStart: '', reportDateEnd: '', reportSearch: '',
             reportAdditionalOther: '',
-            showPatientInfo: false // นำกลับมาใช้เพื่อทำ Progressive Disclosure
+            showPatientInfo: false,
+            showOrganismList: false, showNonNeoList: false // State สำหรับเปิดปิด Dropdown report
         });
 
         const formReport = reactive({ 
             rowId: '', cytoNo: '', patient: {}, 
             adequacy: '', adequacyDetail: '', additional: '',
+            organismSelections: [], organismOtherText: '', // สำหรับ 100 NEGATIVE - Organism
+            nonNeoSelections: [], // สำหรับ 100 NEGATIVE - Other non neoplastic
             cat300: '', comment: '',
             cytoName: '', cytoDate: '', cytoTime: '',
             hasPatho: false, pathoName: '', pathoDate: '', pathoTime: ''
@@ -195,11 +202,17 @@ const app = createApp({
         const filteredDistricts = computed(() => masterDistricts.value.filter(d => d.toLowerCase().includes(ui.searchDist.toLowerCase())));
         const filteredContras = computed(() => masterContras.filter(c => c.toLowerCase().includes(ui.searchContra.toLowerCase())));
 
-        const closeAllDropdowns = () => { ui.showUnitList = false; ui.showDistList = false; ui.showContraList = false; ui.showPrevTxList = false; };
+        const closeAllDropdowns = () => { 
+            ui.showUnitList = false; ui.showDistList = false; ui.showContraList = false; ui.showPrevTxList = false; 
+            ui.showOrganismList = false; ui.showNonNeoList = false;
+        };
         const selectUnit = (val) => { ui.searchUnit = val; formReg.unit = val; ui.showUnitList = false; };
         const selectDist = (val) => { ui.searchDist = val; formReg.district = val; ui.showDistList = false; };
         const selectContra = (val) => { ui.searchContra = val; ui.showContraList = false; };
         const togglePrevTx = (item) => { const idx = ui.prevTxSelections.indexOf(item); if (idx > -1) ui.prevTxSelections.splice(idx, 1); else ui.prevTxSelections.push(item); };
+        
+        const toggleOrganism = (item) => { const idx = formReport.organismSelections.indexOf(item); if (idx > -1) formReport.organismSelections.splice(idx, 1); else formReport.organismSelections.push(item); };
+        const toggleNonNeo = (item) => { const idx = formReport.nonNeoSelections.indexOf(item); if (idx > -1) formReport.nonNeoSelections.splice(idx, 1); else formReport.nonNeoSelections.push(item); };
 
         const getMethodColor = (val) => {
             if (val === 'Conventional cytology') return 'text-slate-600 bg-slate-100 px-2.5 py-1 rounded-md text-sm border theme-border font-bold';
@@ -213,7 +226,6 @@ const app = createApp({
             else if (['นาย', 'เด็กชาย', 'พระภิกษุ'].includes(newVal)) formReg.sex = 'ชาย';
         });
 
-        // ดัก Event เมื่อเปลี่ยนหน้าไปที่ "สถิติ" ให้เรียก fetchData อัตโนมัติ (ลดภาระ User)
         watch(() => page.value, (newPage, oldPage) => {
             if (newPage === 'statistics' && oldPage !== 'statistics') {
                 fetchData();
@@ -354,6 +366,8 @@ const app = createApp({
                 if (!e.target.closest('.dist-dropdown')) ui.showDistList = false;
                 if (!e.target.closest('.contra-dropdown')) ui.showContraList = false;
                 if (!e.target.closest('.prevtx-dropdown')) ui.showPrevTxList = false;
+                if (!e.target.closest('.organism-dropdown')) ui.showOrganismList = false;
+                if (!e.target.closest('.nonneo-dropdown')) ui.showNonNeoList = false;
             });
 
             window.addEventListener('mousemove', resetAfkTimer);
@@ -582,6 +596,36 @@ const app = createApp({
             formReport.adequacy = patient.adequacy || ''; formReport.adequacyDetail = patient.adequacyDetail || '';
             if (patient.additional && patient.additional.startsWith('029 Other - ')) { formReport.additional = '029 Other'; ui.reportAdditionalOther = patient.additional.replace('029 Other - ', ''); } else { formReport.additional = patient.additional || ''; ui.reportAdditionalOther = ''; }
             
+            // นำข้อมูล Organism ที่บันทึกไว้ คืนค่าสู่ฟอร์ม
+            formReport.organismSelections = []; formReport.organismOtherText = '';
+            if (patient.organism) {
+                const parts = patient.organism.split(',').map(s => s.trim());
+                parts.forEach(p => {
+                    if (p.startsWith('109 Other organism - ')) {
+                        if(!formReport.organismSelections.includes('109 Other organism')) formReport.organismSelections.push('109 Other organism');
+                        formReport.organismOtherText = p.replace('109 Other organism - ', '');
+                    } else if (p === '109 Other organism') {
+                        if(!formReport.organismSelections.includes('109 Other organism')) formReport.organismSelections.push('109 Other organism');
+                    } else if (masterOrganism.includes(p)) {
+                        if(!formReport.organismSelections.includes(p)) formReport.organismSelections.push(p);
+                    } else {
+                        if(!formReport.organismSelections.includes('109 Other organism')) formReport.organismSelections.push('109 Other organism');
+                        formReport.organismOtherText = formReport.organismOtherText ? formReport.organismOtherText + ' ' + p : p;
+                    }
+                });
+            }
+
+            // นำข้อมูล Non-neoplastic ที่บันทึกไว้ คืนค่าสู่ฟอร์ม
+            formReport.nonNeoSelections = [];
+            if (patient.nonNeo) {
+                const parts = patient.nonNeo.split(',').map(s => s.trim());
+                parts.forEach(p => {
+                    if (masterNonNeo.includes(p)) {
+                        if(!formReport.nonNeoSelections.includes(p)) formReport.nonNeoSelections.push(p);
+                    }
+                });
+            }
+
             formReport.cat300 = patient.cat300 || '';
             formReport.comment = patient.comment || '';
 
@@ -601,17 +645,40 @@ const app = createApp({
         const submitReport = async () => {
             if (viewMode.value) return;
             if (!formReport.adequacy) { if(typeof Swal !== 'undefined') Swal.fire('แจ้งเตือน', 'กรุณาเลือก SPECIMEN ADEQUACY', 'warning'); return; }
+            
+            // เพิ่ม Validation: บังคับพิมพ์ช่องอธิบายหากเลือก 109 Other organism
+            if (formReport.organismSelections.includes('109 Other organism') && !formReport.organismOtherText.trim()) {
+                if(typeof Swal !== 'undefined') Swal.fire('ข้อมูลไม่ครบ', 'กรุณาระบุคำอธิบายสำหรับ 109 Other organism', 'warning');
+                return;
+            }
+
             if(typeof Swal === 'undefined') return;
             const confirm = await Swal.fire({ title: 'ยืนยันการบันทึกผล?', text: `ผู้ป่วย: ${formReport.patient.fname} ${formReport.patient.lname}`, icon: 'question', showCancelButton: true, confirmButtonText: 'บันทึก', confirmButtonColor: '#10b981' });
             
             if (confirm.isConfirmed) {
                 isLoading.value = true;
                 try {
+                    // จัดการข้อมูล Array ให้เป็น String ก่อนส่ง
+                    let finalOrganism = [];
+                    formReport.organismSelections.forEach(org => {
+                        if (org === '109 Other organism') {
+                            if (formReport.organismOtherText) finalOrganism.push('109 Other organism - ' + formReport.organismOtherText);
+                            else finalOrganism.push('109 Other organism');
+                        } else {
+                            finalOrganism.push(org);
+                        }
+                    });
+
                     const payload = { 
                         rowId: formReport.rowId, 
                         isEdit: formReport.patient.status === 'Reported', 
                         adequacy: formReport.adequacy, adequacyDetail: formReport.adequacyDetail, 
                         additional: formReport.additional === '029 Other' && ui.reportAdditionalOther ? `029 Other - ${ui.reportAdditionalOther}` : formReport.additional, 
+                        
+                        // แนบข้อมูล Organism และ NonNeo ส่งให้ Backend
+                        organism: finalOrganism.join(', '),
+                        nonNeo: formReport.nonNeoSelections.join(', '),
+
                         cat300: formReport.cat300, comment: formReport.comment,
                         cytoName: formReport.cytoName, cytoDateTime: formatSignatureDate(formReport.cytoDate, formReport.cytoTime),
                         pathoName: formReport.hasPatho ? formReport.pathoName : '', pathoDateTime: formReport.hasPatho ? formatSignatureDate(formReport.pathoDate, formReport.pathoTime) : ''
@@ -650,11 +717,11 @@ const app = createApp({
             statusFilter, unitFilter, dashDateStart, dashDateEnd, showSettingsModal, showProfileModal, loginStep, otpInput, otpMessage,
             user, config, formLogin, stats, tatOverview, patients, filteredPatients, progressPercent, unitStats,
             canAccessReport, formReg, prefixes, searchQuery, systemConfig,
-            ui, filteredUnits, filteredDistricts, filteredContras, masterPrevTx, masterCytoTechs, masterPathos, masterUnits,
+            ui, filteredUnits, filteredDistricts, filteredContras, masterPrevTx, masterCytoTechs, masterPathos, masterUnits, masterOrganism, masterNonNeo,
             logoRef, isLogoPlaying, toggleLogo, appVersion,
             theme, changeTheme, isLocked, lockPassword, lockError, lockScreen, unlockScreen, handleMainScroll, handleTableScroll,
             submitRegister, handleLoginStep1, handleLoginStep2, handleLogout, fetchData, openRegisterPage, openEditMode, openViewMode,
-            handleImageUpload, openChangePassword, selectUnit, selectDist, selectContra, togglePrevTx, closeAllDropdowns,
+            handleImageUpload, openChangePassword, selectUnit, selectDist, selectContra, togglePrevTx, toggleOrganism, toggleNonNeo, closeAllDropdowns,
             getMethodColor, getTAT,
             filteredReportPatients, openReportList, openReportForm, formReport, adequacyDetailOptions, additionalOptions, submitReport
         };
