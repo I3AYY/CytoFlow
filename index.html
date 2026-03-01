@@ -261,7 +261,6 @@
                 
                 <!-- NEW Statistics Page -->
                 <div v-if="page === 'statistics'" key="statistics" class="flex flex-col gap-4 h-full overflow-hidden">
-                    <!-- ส่วนหัวตาราง สถิติ (ตรึง) -->
                     <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 liquid-glass p-4 rounded-2xl shrink-0">
                         <div>
                             <h2 class="text-2xl font-black theme-text">ภาพรวมการดำเนินงาน</h2>
@@ -277,11 +276,8 @@
                         </div>
                     </div>
 
-                    <!-- พื้นที่เนื้อหาสถิติ (เลื่อนได้) -->
                     <div class="flex-1 overflow-y-auto custom-scroll pb-6" @scroll="handleTableScroll">
-                        <!-- ส่วนสถิติแบบเต็ม -->
                         <div v-show="isDashboardTopOpen" class="grid grid-cols-1 lg:grid-cols-12 gap-4 animate-slide-up origin-top mb-4">
-                            <!-- Summary Cards -->
                             <div class="lg:col-span-3 flex flex-col gap-3">
                                 <div class="liquid-glass p-4 rounded-[1.25rem] relative overflow-hidden group hover:-translate-y-1 transition border-l-4 border-l-blue-500">
                                     <div class="relative z-10"><p class="theme-text-muted text-[11px] font-bold uppercase tracking-widest mb-0">สิ่งส่งตรวจทั้งหมด</p><h3 class="text-3xl leading-none font-black text-blue-500 mt-1">{{ stats.total }}</h3></div>
@@ -297,7 +293,6 @@
                                 </div>
                             </div>
 
-                            <!-- Charts -->
                             <div class="lg:col-span-4 liquid-glass p-4 rounded-3xl flex flex-col items-center justify-center relative min-h-[200px]">
                                 <h3 class="font-bold theme-text text-sm absolute top-4 left-5 w-full flex justify-between pr-10">
                                     <span>ความคืบหน้าภาพรวม</span>
@@ -307,7 +302,6 @@
                                     <canvas id="statusChart"></canvas>
                                 </div>
                                 
-                                <!-- TAT Ratio Overlay -->
                                 <div class="w-full mt-3 pt-3 border-t theme-border flex justify-between items-center px-2">
                                     <div class="text-center">
                                         <span class="text-[10px] theme-text-muted font-bold block">ในเกณฑ์ TAT ({{tatOverview.percentOnTime}}%)</span>
@@ -326,7 +320,6 @@
                                 </div>
                             </div>
 
-                            <!-- Status by Unit -->
                             <div class="lg:col-span-5 liquid-glass p-4 rounded-3xl flex flex-col">
                                 <h3 class="font-bold theme-text text-sm mb-3">สถานะแบ่งตามหน่วยงาน</h3>
                                 <div class="flex-1 overflow-y-auto pr-3 space-y-3 max-h-[220px] custom-scroll">
@@ -344,7 +337,6 @@
                             </div>
                         </div>
 
-                        <!-- ส่วนสถิติแบบย่อ -->
                         <div v-show="!isDashboardTopOpen" class="liquid-glass p-3 rounded-2xl flex flex-wrap gap-4 items-center shrink-0 animate-slide-up mb-4">
                             <div class="flex items-center gap-3 border-r theme-border pr-4"><div class="w-8 h-8 rounded-full bg-blue-500/10 text-blue-500 flex items-center justify-center"><i class="ph ph-flask text-lg"></i></div><div><p class="text-[9px] font-bold theme-text-muted uppercase">ทั้งหมด</p><p class="text-lg font-black theme-text leading-none mt-0.5">{{ stats.total }}</p></div></div>
                             <div class="flex items-center gap-3 border-r theme-border pr-4"><div class="w-8 h-8 rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center"><i class="ph ph-check-circle text-lg"></i></div><div><p class="text-[9px] font-bold theme-text-muted uppercase">รายงานผลแล้ว</p><p class="text-lg font-black text-emerald-500 leading-none mt-0.5">{{ stats.reported }}</p></div></div>
@@ -357,7 +349,6 @@
                             </div>
                         </div>
 
-                        <!-- เตรียมพื้นที่รองรับสถิติผลการตรวจในอนาคต -->
                         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 animate-slide-up">
                             <div class="liquid-glass p-6 rounded-3xl min-h-[250px] flex flex-col items-center justify-center text-center opacity-70 border-dashed border-2">
                                 <i class="ph ph-chart-pie-slice text-5xl theme-text-muted mb-3 opacity-50"></i>
@@ -375,8 +366,6 @@
 
                 <!-- Dashboard (รายการผู้รับบริการ) -->
                 <div v-if="page === 'dashboard'" key="dashboard" class="flex flex-col gap-4 h-full overflow-hidden">
-                    
-                    <!-- ส่วนหัวตาราง (ตรึง) -->
                     <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 liquid-glass p-4 rounded-2xl shrink-0">
                         <div>
                             <h2 class="text-2xl font-black theme-text">รายการผู้รับบริการ</h2>
@@ -389,10 +378,7 @@
                         </div>
                     </div>
 
-                    <!-- Filter & Table List -->
                     <div class="liquid-glass rounded-3xl flex flex-col flex-1 min-h-[300px] overflow-hidden">
-                        
-                        <!-- ชุดเครื่องมือค้นหา (ตรึง) -->
                         <div class="py-3 px-4 border-b theme-border bg-black/5 flex flex-col lg:flex-row gap-3 lg:items-end shrink-0">
                             <div class="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                                 <div><label class="label-sm">จากวันที่รับ</label><input v-model="dashDateStart" type="date" class="input-std font-medium"></div>
@@ -419,7 +405,6 @@
                             </div>
                         </div>
 
-                        <!-- ตาราง -->
                         <div class="overflow-x-auto overflow-y-auto flex-1 relative bg-black/5 custom-scroll">
                             <table class="w-full text-left border-collapse">
                                 <thead class="text-[11px] uppercase border-b theme-border font-bold sticky top-0 z-20 shadow-sm"
@@ -466,7 +451,7 @@
                     </div>
                 </div>
 
-                <!-- Registration Form (CHANGED: Horizontal Layout & Compact Spacing) -->
+                <!-- Registration Form -->
                 <div v-else-if="page === 'register'" key="register" class="max-w-7xl mx-auto pb-6 w-full animate-slide-up">
                     <div class="flex items-center justify-between mb-3">
                         <div class="flex items-center gap-3">
@@ -481,10 +466,7 @@
                     
                     <form @submit.prevent="submitRegister" class="liquid-glass rounded-[1.5rem] overflow-hidden">
                         
-                        <!-- NEW LAYOUT: Grid 2 Columns for General & Unit Info -->
                         <div class="grid grid-cols-1 xl:grid-cols-12 border-b theme-border">
-                            
-                            <!-- Section 1 (Left): General Info -->
                             <div class="xl:col-span-7 p-3 md:p-4 xl:border-r theme-border bg-blue-500/5">
                                 <h3 class="text-[12px] font-black text-blue-500 uppercase tracking-widest mb-3 flex items-center gap-2"><i class="ph ph-identification-card text-lg"></i> ข้อมูลทั่วไป</h3>
                                 <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-x-3 gap-y-2.5">
@@ -503,7 +485,6 @@
                                 </div>
                             </div>
                             
-                            <!-- Section 2 (Right): Unit Info -->
                             <div class="xl:col-span-5 p-3 md:p-4 bg-orange-500/5 border-t xl:border-t-0 theme-border">
                                 <h3 class="text-[12px] font-black text-orange-500 uppercase tracking-widest mb-3 flex items-center gap-2"><i class="ph ph-hospital text-lg"></i> ข้อมูลหน่วยงาน</h3>
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-x-3 gap-y-2.5">
@@ -530,7 +511,6 @@
                             </div>
                         </div>
                         
-                        <!-- Section 3 (Bottom Full Width): Clinical Info -->
                         <div class="p-3 md:p-4 bg-emerald-500/5">
                             <h3 class="text-[12px] font-black text-emerald-500 uppercase tracking-widest mb-3 flex items-center gap-2"><i class="ph ph-heartbeat text-lg"></i> ข้อมูลทางคลินิก</h3>
                             <div class="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-6 gap-x-3 gap-y-2.5">
@@ -687,7 +667,7 @@
                     </div>
                 </div>
 
-                <!-- Report Form (CHANGED: Compact Spacing) -->
+                <!-- Report Form (อัปเดต 2-Column Grid ลดการ Scroll) -->
                 <div v-else-if="page === 'report_form'" key="report_form" class="max-w-[1600px] mx-auto pb-6 w-full animate-slide-up">
                     <div class="flex items-center gap-3 mb-3">
                         <button @click="page='report_list'" class="w-9 h-9 rounded-xl bg-[var(--bg-input)] border theme-border flex items-center justify-center theme-text-muted hover:text-emerald-500 hover:border-emerald-300 transition-all shadow-sm group"><i class="ph ph-arrow-left text-lg group-hover:-translate-x-1 transition-transform"></i></button>
@@ -697,7 +677,7 @@
                         </div>
                     </div>
 
-                    <!-- Patient Info (พร้อมปุ่มย่อขยายแบบ Progressive Disclosure) -->
+                    <!-- Patient Info (Progressive Disclosure) -->
                     <div class="liquid-glass rounded-2xl mb-3 overflow-hidden shadow-sm">
                         <div class="p-3 bg-[var(--bg-card)] border-b theme-border flex justify-between items-center cursor-pointer hover:bg-black/5 transition" @click="ui.showPatientInfo = !ui.showPatientInfo">
                             <h3 class="font-black theme-text flex items-center gap-2 text-[14px]"><i class="ph ph-user-circle text-lg text-indigo-500"></i> ข้อมูลผู้ป่วย (Patient Info)</h3>
@@ -705,8 +685,6 @@
                                 <i class="ph ph-caret-up transition-transform duration-300" :class="!ui.showPatientInfo ? 'rotate-180' : ''"></i>
                             </button>
                         </div>
-
-                        <!-- โหมดย่อ (Compact View) -->
                         <div v-show="!ui.showPatientInfo" class="p-3 bg-[var(--bg-input)] flex flex-wrap items-center gap-2 text-[13px] animate-slide-up">
                             <div class="bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-lg flex items-center gap-1.5 shadow-sm">
                                 <i class="ph ph-flask text-emerald-500 text-base"></i>
@@ -724,8 +702,6 @@
                                 <span :class="getMethodColor(formReport.patient.method) + ' shadow-sm block text-[12px]'"><i class="ph ph-microscope mr-1.5"></i>{{ formReport.patient.method || '-' }}</span>
                             </div>
                         </div>
-
-                        <!-- โหมดเต็ม (Full View) -->
                         <div v-show="ui.showPatientInfo" class="p-4 text-[13px] bg-[var(--bg-input)] animate-slide-up">
                             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-y-3 gap-x-6">
                                 <div class="col-span-full flex flex-wrap gap-x-6 gap-y-2 border-b theme-border pb-2">
@@ -751,159 +727,279 @@
                         </div>
                     </div>
                     
-                    <form @submit.prevent="submitReport" class="liquid-glass rounded-[1.5rem] overflow-hidden">
+                    <form @submit.prevent="submitReport" class="liquid-glass rounded-[1.5rem] overflow-hidden shadow-md">
                         
+                        <!-- NEW: 2-Column Grid Layout for Desktop to prevent scroll -->
                         <div class="grid grid-cols-1 lg:grid-cols-2">
                             
-                            <!-- Box 1 -->
-                            <div class="p-3 md:p-4 lg:border-r theme-border border-b bg-emerald-500/5 h-full">
-                                <h3 class="font-black text-emerald-600 mb-3 text-[15px] border-l-[3px] border-emerald-500 pl-2">1. SPECIMEN ADEQUACY</h3>
-                                <div class="space-y-2.5">
-                                    <div>
+                            <!-- ================= LEFT COLUMN ================= -->
+                            <div class="flex flex-col border-b lg:border-b-0 lg:border-r theme-border h-full">
+                                
+                                <!-- 1. SPECIMEN ADEQUACY -->
+                                <div class="p-3 md:p-4 bg-emerald-500/5 border-b theme-border">
+                                    <h3 class="font-black text-emerald-600 mb-3 text-[14px] border-l-[3px] border-emerald-500 pl-2">1. SPECIMEN ADEQUACY</h3>
+                                    <div class="space-y-2">
                                         <div class="flex flex-col gap-2">
-                                            <label class="flex items-center gap-2 p-2.5 border theme-border rounded-lg transition w-full" :class="[viewMode ? 'cursor-not-allowed' : 'cursor-pointer hover:bg-black/5', formReport.adequacy==='010 Satisfactory' ? 'border-emerald-500 bg-emerald-500/10 ring-2 ring-emerald-500/30' : 'bg-[var(--bg-input)]']">
+                                            <label class="flex items-center gap-2 p-2 border theme-border rounded-lg transition w-full" :class="[viewMode ? 'cursor-not-allowed' : 'cursor-pointer hover:bg-black/5', formReport.adequacy==='010 Satisfactory' ? 'border-emerald-500 bg-emerald-500/10 ring-2 ring-emerald-500/30' : 'bg-[var(--bg-input)]']">
                                                 <input type="radio" v-model="formReport.adequacy" value="010 Satisfactory" class="text-emerald-500 focus:ring-emerald-500 w-3.5 h-3.5" :disabled="viewMode">
                                                 <span class="theme-text font-bold text-[13px]">010 Satisfactory</span>
                                             </label>
-                                            <label class="flex items-center gap-2 p-2.5 border theme-border rounded-lg transition w-full" :class="[viewMode ? 'cursor-not-allowed' : 'cursor-pointer hover:bg-black/5', formReport.adequacy==='030 Unsatisfactory for evaluation' ? 'border-rose-500 bg-rose-500/10 ring-2 ring-rose-500/30' : 'bg-[var(--bg-input)]']">
+                                            <label class="flex items-center gap-2 p-2 border theme-border rounded-lg transition w-full" :class="[viewMode ? 'cursor-not-allowed' : 'cursor-pointer hover:bg-black/5', formReport.adequacy==='030 Unsatisfactory for evaluation' ? 'border-rose-500 bg-rose-500/10 ring-2 ring-rose-500/30' : 'bg-[var(--bg-input)]']">
                                                 <input type="radio" v-model="formReport.adequacy" value="030 Unsatisfactory for evaluation" class="text-rose-500 focus:ring-rose-500 w-3.5 h-3.5" :disabled="viewMode">
                                                 <span class="theme-text font-bold text-[13px]">030 Unsatisfactory for evaluation</span>
                                             </label>
                                         </div>
-                                    </div>
-                                    <div v-if="formReport.adequacy" class="animate-slide-up bg-emerald-500/10 p-3 rounded-lg border border-emerald-500/20">
-                                        <label class="label-sm text-emerald-600">รายละเอียด {{ formReport.adequacy }} <span class="text-red-500">*</span></label>
-                                        <select v-model="formReport.adequacyDetail" class="input-std focus:ring-2 focus:ring-emerald-500 font-bold mt-1" required :disabled="viewMode">
-                                            <option value="" disabled selected>เลือกรายละเอียด...</option>
-                                            <option v-for="(opt, idx) in adequacyDetailOptions" :key="'adq-'+idx" :value="opt.text">{{ opt.text }}</option>
-                                        </select>
-                                    </div>
-                                    <div class="bg-[var(--bg-input)] p-3 rounded-lg border theme-border shadow-sm">
-                                        <label class="label-sm">Additional (เพิ่มเติม)</label>
-                                        <select v-model="formReport.additional" class="input-std focus:ring-2 focus:ring-emerald-500 font-bold" :class="{'mb-1.5': formReport.additional === '029 Other'}" :disabled="viewMode">
-                                            <option value="">ไม่ระบุ</option>
-                                            <option v-for="(opt, idx) in additionalOptions" :key="'add-'+idx" :value="opt.text">{{ opt.text }}</option>
-                                        </select>
-                                        <input v-if="formReport.additional === '029 Other'" v-model="ui.reportAdditionalOther" type="text" class="input-std focus:ring-2 focus:ring-emerald-500 animate-slide-up font-bold" placeholder="ระบุ Additional อื่นๆ..." :disabled="viewMode">
+                                        <div v-if="formReport.adequacy" class="animate-slide-up bg-emerald-500/10 p-2.5 rounded-lg border border-emerald-500/20">
+                                            <label class="label-sm text-emerald-600">รายละเอียด <span class="text-red-500">*</span></label>
+                                            <select v-model="formReport.adequacyDetail" class="input-std focus:ring-2 focus:ring-emerald-500 font-bold mt-1 text-[12px] py-1.5" required :disabled="viewMode">
+                                                <option value="" disabled selected>เลือกรายละเอียด...</option>
+                                                <option v-for="(opt, idx) in adequacyDetailOptions" :key="'adq-'+idx" :value="opt.text">{{ opt.text }}</option>
+                                            </select>
+                                        </div>
+                                        <div class="bg-[var(--bg-input)] p-2.5 rounded-lg border theme-border shadow-sm flex flex-col md:flex-row gap-2">
+                                            <div class="flex-1">
+                                                <label class="label-sm">Additional (เพิ่มเติม)</label>
+                                                <select v-model="formReport.additional" class="input-std focus:ring-2 focus:ring-emerald-500 font-bold text-[12px] py-1.5 mt-1" :disabled="viewMode">
+                                                    <option value="">ไม่ระบุ</option>
+                                                    <option v-for="(opt, idx) in additionalOptions" :key="'add-'+idx" :value="opt.text">{{ opt.text }}</option>
+                                                </select>
+                                            </div>
+                                            <div class="flex-1" v-if="formReport.additional === '029 Other'">
+                                                <label class="label-sm">ระบุอื่นๆ</label>
+                                                <input v-model="ui.reportAdditionalOther" type="text" class="input-std focus:ring-2 focus:ring-emerald-500 animate-slide-up font-bold text-[12px] py-1.5 mt-1" placeholder="ระบุ..." :disabled="viewMode">
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                            
-                            <!-- Box 2 -->
-                            <div class="p-3 md:p-4 border-b theme-border bg-violet-500/5 h-full flex flex-col">
-                                <h3 class="font-black text-violet-600 mb-3 text-[15px] border-l-[3px] border-violet-500 pl-2">2. GENERAL CATEGORIZATION</h3>
-                                <div class="space-y-3 flex-1">
+
+                                <!-- 2. GEN CAT: 100 NEGATIVE -->
+                                <div class="p-3 md:p-4 bg-violet-500/5 flex-1">
+                                    <h3 class="font-black text-violet-600 mb-3 text-[14px] border-l-[3px] border-violet-500 pl-2">2. GENERAL CATEGORIZATION</h3>
                                     
-                                    <!-- NEW: 100 NEGATIVE FOR INTRAEPITHELIAL LESION OR MALIGNANCY -->
-                                    <div class="border theme-border rounded-xl p-3 bg-[var(--bg-card)] shadow-sm relative overflow-visible">
-                                        <div class="flex items-center mb-2">
-                                            <label class="text-[12px] font-black text-violet-700 tracking-tight">100 NEGATIVE FOR INTRAEPITHELIAL LESION OR MALIGNANCY</label>
-                                        </div>
+                                    <div class="border theme-border rounded-xl p-3 bg-[var(--bg-card)] shadow-sm relative overflow-visible mb-3">
+                                        <label class="text-[12px] font-black text-violet-700 tracking-tight block mb-2">100 NEGATIVE FOR INTRAEPITHELIAL LESION OR MALIGNANCY</label>
                                         <div class="space-y-3">
-                                            
-                                            <!-- Sub 1: Organism -->
+                                            <!-- Organism -->
                                             <div class="relative organism-dropdown">
                                                 <label class="label-sm text-[11px] mb-1">Organism</label>
-                                                <div @click="!viewMode && (ui.showOrganismList = !ui.showOrganismList)" class="input-std font-medium focus:ring-2 focus:ring-violet-500 min-h-[32px] flex flex-wrap gap-1.5 items-center relative" :class="viewMode ? 'cursor-not-allowed bg-black/5' : 'cursor-pointer'">
-                                                    <span v-if="formReport.organismSelections.length === 0" class="text-slate-400 font-normal">ไม่ได้ระบุ...</span>
-                                                    <span v-for="(item, idx) in formReport.organismSelections" :key="'os-'+idx" class="bg-violet-500/10 text-violet-600 px-1.5 py-0.5 rounded text-[11px] flex items-center gap-1 font-bold border border-violet-500/20 shadow-sm">
+                                                <div @click="!viewMode && (ui.showOrganismList = !ui.showOrganismList)" class="input-std font-medium focus:ring-2 focus:ring-violet-500 min-h-[32px] flex flex-wrap gap-1 items-center relative py-1" :class="viewMode ? 'cursor-not-allowed bg-black/5' : 'cursor-pointer'">
+                                                    <span v-if="formReport.organismSelections.length === 0" class="text-slate-400 font-normal text-[12px]">ไม่ได้ระบุ...</span>
+                                                    <span v-for="(item, idx) in formReport.organismSelections" :key="'os-'+idx" class="bg-violet-500/10 text-violet-600 px-1.5 py-0.5 rounded text-[10px] flex items-center gap-1 font-bold border border-violet-500/20">
                                                         {{ item }} <i v-if="!viewMode" class="ph ph-x cursor-pointer hover:text-violet-800 ml-1 font-bold" @click.stop="toggleOrganism(item)"></i>
                                                     </span>
-                                                    <i v-if="!viewMode" class="ph ph-caret-down absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></i>
+                                                    <i v-if="!viewMode" class="ph ph-caret-down absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-sm"></i>
                                                 </div>
                                                 <ul v-show="ui.showOrganismList" class="absolute z-30 w-full bg-[var(--bg-input)] border theme-border shadow-xl max-h-48 overflow-y-auto rounded-xl mt-1 backdrop-blur-md">
-                                                    <li v-for="(org, idx) in masterOrganism" :key="'mo-'+idx" class="px-3 py-2 hover:bg-black/5 cursor-pointer text-[13px] theme-text flex items-center border-b theme-border font-medium">
-                                                        <input type="checkbox" :value="org" v-model="formReport.organismSelections" class="mr-3 text-violet-500 focus:ring-violet-500 rounded cursor-pointer w-4 h-4">
+                                                    <li v-for="(org, idx) in masterOrganism" :key="'mo-'+idx" class="px-3 py-1.5 hover:bg-black/5 cursor-pointer text-[12px] theme-text flex items-center border-b theme-border font-medium">
+                                                        <input type="checkbox" :value="org" v-model="formReport.organismSelections" class="mr-2 text-violet-500 focus:ring-violet-500 rounded cursor-pointer w-3.5 h-3.5">
                                                         <span @click.prevent="toggleOrganism(org)" class="flex-1">{{ org }}</span>
                                                     </li>
                                                 </ul>
-                                                <input v-if="formReport.organismSelections.includes('109 Other organism')" v-model="formReport.organismOtherText" type="text" class="input-std font-medium focus:ring-2 focus:ring-violet-400 mt-1.5 animate-slide-up" placeholder="ระบุชนิด Organism อื่นๆ (บังคับ)..." :disabled="viewMode" required>
+                                                <input v-if="formReport.organismSelections.includes('109 Other organism')" v-model="formReport.organismOtherText" type="text" class="input-std font-medium focus:ring-2 focus:ring-violet-400 mt-1.5 py-1.5 text-[12px] animate-slide-up" placeholder="ระบุอื่นๆ (บังคับ)..." :disabled="viewMode" required>
                                             </div>
 
-                                            <!-- Sub 2: Other non neoplastic -->
+                                            <!-- Non-neoplastic -->
                                             <div class="relative nonneo-dropdown">
-                                                <label class="label-sm text-[11px] mb-1">Other non neoplastic finding Reactive cellular changes associated with</label>
-                                                <div @click="!viewMode && (ui.showNonNeoList = !ui.showNonNeoList)" class="input-std font-medium focus:ring-2 focus:ring-violet-500 min-h-[32px] flex flex-wrap gap-1.5 items-center relative" :class="viewMode ? 'cursor-not-allowed bg-black/5' : 'cursor-pointer'">
-                                                    <span v-if="formReport.nonNeoSelections.length === 0" class="text-slate-400 font-normal">ไม่ได้ระบุ...</span>
-                                                    <span v-for="(item, idx) in formReport.nonNeoSelections" :key="'ns-'+idx" class="bg-violet-500/10 text-violet-600 px-1.5 py-0.5 rounded text-[11px] flex items-center gap-1 font-bold border border-violet-500/20 shadow-sm">
+                                                <label class="label-sm text-[10px] mb-1 leading-tight">Other non neoplastic finding Reactive cellular changes associated with</label>
+                                                <div @click="!viewMode && (ui.showNonNeoList = !ui.showNonNeoList)" class="input-std font-medium focus:ring-2 focus:ring-violet-500 min-h-[32px] flex flex-wrap gap-1 items-center relative py-1" :class="viewMode ? 'cursor-not-allowed bg-black/5' : 'cursor-pointer'">
+                                                    <span v-if="formReport.nonNeoSelections.length === 0" class="text-slate-400 font-normal text-[12px]">ไม่ได้ระบุ...</span>
+                                                    <span v-for="(item, idx) in formReport.nonNeoSelections" :key="'ns-'+idx" class="bg-violet-500/10 text-violet-600 px-1.5 py-0.5 rounded text-[10px] flex items-center gap-1 font-bold border border-violet-500/20">
                                                         {{ item }} <i v-if="!viewMode" class="ph ph-x cursor-pointer hover:text-violet-800 ml-1 font-bold" @click.stop="toggleNonNeo(item)"></i>
                                                     </span>
-                                                    <i v-if="!viewMode" class="ph ph-caret-down absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></i>
+                                                    <i v-if="!viewMode" class="ph ph-caret-down absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-sm"></i>
                                                 </div>
                                                 <ul v-show="ui.showNonNeoList" class="absolute z-20 w-full bg-[var(--bg-input)] border theme-border shadow-xl max-h-48 overflow-y-auto rounded-xl mt-1 backdrop-blur-md">
-                                                    <li v-for="(nn, idx) in masterNonNeo" :key="'mnn-'+idx" class="px-3 py-2 hover:bg-black/5 cursor-pointer text-[13px] theme-text flex items-center border-b theme-border font-medium">
-                                                        <input type="checkbox" :value="nn" v-model="formReport.nonNeoSelections" class="mr-3 text-violet-500 focus:ring-violet-500 rounded cursor-pointer w-4 h-4">
+                                                    <li v-for="(nn, idx) in masterNonNeo" :key="'mnn-'+idx" class="px-3 py-1.5 hover:bg-black/5 cursor-pointer text-[12px] theme-text flex items-center border-b theme-border font-medium">
+                                                        <input type="checkbox" :value="nn" v-model="formReport.nonNeoSelections" class="mr-2 text-violet-500 focus:ring-violet-500 rounded cursor-pointer w-3.5 h-3.5">
                                                         <span @click.prevent="toggleNonNeo(nn)" class="flex-1">{{ nn }}</span>
                                                     </li>
                                                 </ul>
                                             </div>
                                         </div>
                                     </div>
-                                    <!-- END NEW -->
+                                </div>
 
-                                    <div>
-                                        <div class="flex justify-between items-center mb-1"><label class="label-sm">200 EPITHELIAL CELLS ABNORMALITIES</label><span class="bg-amber-500/10 text-amber-600 text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded border border-amber-500/20">Dev</span></div>
-                                        <input type="text" disabled class="input-std bg-black/5 border-dashed border-2 cursor-not-allowed">
+                            </div>
+
+                            <!-- ================= RIGHT COLUMN ================= -->
+                            <div class="flex flex-col h-full bg-amber-500/5">
+                                
+                                <!-- 2. GEN CAT: 200 EPITHELIAL -->
+                                <div class="p-3 md:p-4 border-b theme-border flex-1">
+                                    <div class="flex justify-between items-center mb-3">
+                                        <h3 class="font-black text-amber-600 text-[14px] border-l-[3px] border-amber-500 pl-2">200 EPITHELIAL CELLS ABNORMALITIES</h3>
                                     </div>
-                                    <div>
-                                        <label class="label-sm text-violet-600">300 OTHER MALIGNANT NEOPLASMS</label>
-                                        <input v-model="formReport.cat300" type="text" class="input-std focus:ring-2 focus:ring-violet-500 font-bold" placeholder="พิมพ์คำอธิบาย (ถ้ามี)..." :disabled="viewMode">
+                                    
+                                    <div class="space-y-4">
+                                        
+                                        <!-- === SQUAMOUS CELL === -->
+                                        <div class="bg-[var(--bg-card)] border theme-border rounded-xl p-3 shadow-sm">
+                                            <h4 class="text-[12px] font-bold text-amber-700 uppercase tracking-widest mb-2 border-b border-amber-500/20 pb-1">Squamous Cell</h4>
+                                            
+                                            <div class="space-y-1.5">
+                                                <label class="flex items-start gap-2 text-[12px] theme-text font-medium cursor-pointer hover:bg-black/5 p-1 rounded transition" :class="{'opacity-50 cursor-not-allowed': viewMode}">
+                                                    <input type="radio" v-model="formReport.squamousMain" value="" class="mt-0.5 w-3.5 h-3.5 text-amber-500 focus:ring-amber-500" :disabled="viewMode"> <span>(ไม่ระบุ)</span>
+                                                </label>
+                                                
+                                                <!-- Atypical squamous cell -->
+                                                <div class="flex flex-col gap-1">
+                                                    <label class="flex items-start gap-2 text-[12px] theme-text font-bold cursor-pointer hover:bg-black/5 p-1 rounded transition" :class="{'bg-amber-500/10': formReport.squamousMain==='Atypical squamous cell', 'opacity-50 cursor-not-allowed': viewMode}">
+                                                        <input type="radio" v-model="formReport.squamousMain" value="Atypical squamous cell" class="mt-0.5 w-3.5 h-3.5 text-amber-500 focus:ring-amber-500" :disabled="viewMode"> <span>Atypical squamous cell</span>
+                                                    </label>
+                                                    <div v-show="formReport.squamousMain === 'Atypical squamous cell'" class="ml-5 pl-2 border-l-2 border-amber-200 space-y-1 animate-slide-up">
+                                                        <label class="flex items-center gap-2 text-[11px] theme-text cursor-pointer hover:bg-black/5 p-1 rounded"><input type="radio" v-model="formReport.squamousSubSingle" value="211 of undetermined significance (ASC-US)" :required="formReport.squamousMain === 'Atypical squamous cell'" class="w-3 h-3 text-amber-500 focus:ring-amber-500" :disabled="viewMode"> 211 of undetermined significance (ASC-US)</label>
+                                                        <label class="flex items-center gap-2 text-[11px] theme-text cursor-pointer hover:bg-black/5 p-1 rounded"><input type="radio" v-model="formReport.squamousSubSingle" value="212 Cannot exclude HSIL (ASC-H)" :required="formReport.squamousMain === 'Atypical squamous cell'" class="w-3 h-3 text-amber-500 focus:ring-amber-500" :disabled="viewMode"> 212 Cannot exclude HSIL (ASC-H)</label>
+                                                    </div>
+                                                </div>
+
+                                                <!-- LSIL -->
+                                                <div class="flex flex-col gap-1">
+                                                    <label class="flex items-start gap-2 text-[12px] theme-text font-bold cursor-pointer hover:bg-black/5 p-1 rounded transition" :class="{'bg-amber-500/10': formReport.squamousMain==='Low grade squamous intraepithelial lesion (LSIL) encompassing', 'opacity-50 cursor-not-allowed': viewMode}">
+                                                        <input type="radio" v-model="formReport.squamousMain" value="Low grade squamous intraepithelial lesion (LSIL) encompassing" class="mt-0.5 w-3.5 h-3.5 text-amber-500 focus:ring-amber-500" :disabled="viewMode"> <span>Low grade squamous intraepithelial lesion (LSIL) encompassing</span>
+                                                    </label>
+                                                    <div v-show="formReport.squamousMain === 'Low grade squamous intraepithelial lesion (LSIL) encompassing'" class="ml-5 pl-2 border-l-2 border-amber-200 animate-slide-up flex flex-wrap gap-2 py-1">
+                                                        <label class="flex items-center gap-1.5 text-[11px] theme-text cursor-pointer bg-black/5 px-2 py-1 rounded-md border theme-border hover:bg-black/10 transition" :class="{'ring-1 ring-amber-400 bg-amber-50': formReport.squamousSubMulti.includes('221 HPV change')}"><input type="checkbox" v-model="formReport.squamousSubMulti" value="221 HPV change" class="w-3 h-3 text-amber-500 focus:ring-amber-500 rounded" :disabled="viewMode"> 221 HPV change</label>
+                                                        <label class="flex items-center gap-1.5 text-[11px] theme-text cursor-pointer bg-black/5 px-2 py-1 rounded-md border theme-border hover:bg-black/10 transition" :class="{'ring-1 ring-amber-400 bg-amber-50': formReport.squamousSubMulti.includes('222 CIN I')}"><input type="checkbox" v-model="formReport.squamousSubMulti" value="222 CIN I" class="w-3 h-3 text-amber-500 focus:ring-amber-500 rounded" :disabled="viewMode"> 222 CIN I</label>
+                                                        <p v-if="formReport.squamousSubMulti.length === 0 && !viewMode" class="text-[10px] text-red-500 w-full mt-0.5">* กรุณาเลือกอย่างน้อย 1 ข้อ</p>
+                                                    </div>
+                                                </div>
+
+                                                <!-- HSIL -->
+                                                <div class="flex flex-col gap-1">
+                                                    <label class="flex items-start gap-2 text-[12px] theme-text font-bold cursor-pointer hover:bg-black/5 p-1 rounded transition" :class="{'bg-amber-500/10': formReport.squamousMain==='High grade squamous intraepithelial lesion (HSIL) encompassing', 'opacity-50 cursor-not-allowed': viewMode}">
+                                                        <input type="radio" v-model="formReport.squamousMain" value="High grade squamous intraepithelial lesion (HSIL) encompassing" class="mt-0.5 w-3.5 h-3.5 text-amber-500 focus:ring-amber-500" :disabled="viewMode"> <span>High grade squamous intraepithelial lesion (HSIL) encompassing</span>
+                                                    </label>
+                                                    <div v-show="formReport.squamousMain === 'High grade squamous intraepithelial lesion (HSIL) encompassing'" class="ml-5 pl-2 border-l-2 border-amber-200 space-y-1 animate-slide-up">
+                                                        <label class="flex items-center gap-2 text-[11px] theme-text cursor-pointer hover:bg-black/5 p-1 rounded"><input type="radio" v-model="formReport.squamousSubSingle" value="231 CIN II" :required="formReport.squamousMain === 'High grade squamous intraepithelial lesion (HSIL) encompassing'" class="w-3 h-3 text-amber-500 focus:ring-amber-500" :disabled="viewMode"> 231 CIN II</label>
+                                                        <label class="flex items-center gap-2 text-[11px] theme-text cursor-pointer hover:bg-black/5 p-1 rounded"><input type="radio" v-model="formReport.squamousSubSingle" value="232 CIN III" :required="formReport.squamousMain === 'High grade squamous intraepithelial lesion (HSIL) encompassing'" class="w-3 h-3 text-amber-500 focus:ring-amber-500" :disabled="viewMode"> 232 CIN III</label>
+                                                        <label class="flex items-center gap-2 text-[11px] theme-text cursor-pointer hover:bg-black/5 p-1 rounded"><input type="radio" v-model="formReport.squamousSubSingle" value="234 With features suspicious for invasion" :required="formReport.squamousMain === 'High grade squamous intraepithelial lesion (HSIL) encompassing'" class="w-3 h-3 text-amber-500 focus:ring-amber-500" :disabled="viewMode"> 234 With features suspicious for invasion</label>
+                                                        <div class="flex flex-col">
+                                                            <label class="flex items-center gap-2 text-[11px] theme-text cursor-pointer hover:bg-black/5 p-1 rounded"><input type="radio" v-model="formReport.squamousSubSingle" value="241 SIL" :required="formReport.squamousMain === 'High grade squamous intraepithelial lesion (HSIL) encompassing'" class="w-3 h-3 text-amber-500 focus:ring-amber-500" :disabled="viewMode"> 241 SIL</label>
+                                                            <div v-show="formReport.squamousSubSingle === '241 SIL'" class="ml-5 mt-1 flex gap-2 animate-slide-up">
+                                                                <select v-model="formReport.vainOption" class="input-std focus:ring-2 focus:ring-amber-500 font-bold py-1 text-[11px] bg-amber-50" :required="formReport.squamousSubSingle === '241 SIL'" :disabled="viewMode">
+                                                                    <option value="" disabled selected>เลือกระดับ VAIN...</option>
+                                                                    <option value="VAIN">VAIN</option><option value="VAIN I">VAIN I</option><option value="VAIN II">VAIN II</option><option value="VAIN III">VAIN III</option>
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                        <label class="flex items-center gap-2 text-[11px] theme-text cursor-pointer hover:bg-black/5 p-1 rounded"><input type="radio" v-model="formReport.squamousSubSingle" value="251 Squamous cell carcinoma" :required="formReport.squamousMain === 'High grade squamous intraepithelial lesion (HSIL) encompassing'" class="w-3 h-3 text-amber-500 focus:ring-amber-500" :disabled="viewMode"> 251 Squamous cell carcinoma</label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- === GLANDULAR CELL === -->
+                                        <div class="bg-[var(--bg-card)] border theme-border rounded-xl p-3 shadow-sm">
+                                            <h4 class="text-[12px] font-bold text-amber-700 uppercase tracking-widest mb-2 border-b border-amber-500/20 pb-1">Glandular Cell</h4>
+                                            
+                                            <div class="space-y-1.5">
+                                                <label class="flex items-start gap-2 text-[12px] theme-text font-medium cursor-pointer hover:bg-black/5 p-1 rounded transition" :class="{'opacity-50 cursor-not-allowed': viewMode}">
+                                                    <input type="radio" v-model="formReport.glandularMain" value="" class="mt-0.5 w-3.5 h-3.5 text-amber-500 focus:ring-amber-500" :disabled="viewMode"> <span>(ไม่ระบุ)</span>
+                                                </label>
+
+                                                <!-- Atypical glandular cells -->
+                                                <div class="flex flex-col gap-1">
+                                                    <label class="flex items-start gap-2 text-[12px] theme-text font-bold cursor-pointer hover:bg-black/5 p-1 rounded transition" :class="{'bg-amber-500/10': formReport.glandularMain==='Atypical glandular cells', 'opacity-50 cursor-not-allowed': viewMode}">
+                                                        <input type="radio" v-model="formReport.glandularMain" value="Atypical glandular cells" class="mt-0.5 w-3.5 h-3.5 text-amber-500 focus:ring-amber-500" :disabled="viewMode"> <span>Atypical glandular cells</span>
+                                                    </label>
+                                                    <div v-show="formReport.glandularMain === 'Atypical glandular cells'" class="ml-5 pl-2 border-l-2 border-amber-200 space-y-1 animate-slide-up">
+                                                        <label class="flex items-center gap-2 text-[11px] theme-text cursor-pointer hover:bg-black/5 p-1 rounded"><input type="radio" v-model="formReport.glandularSub" value="261 Endocervical" :required="formReport.glandularMain === 'Atypical glandular cells'" class="w-3 h-3 text-amber-500 focus:ring-amber-500" :disabled="viewMode"> 261 Endocervical</label>
+                                                        <label class="flex items-center gap-2 text-[11px] theme-text cursor-pointer hover:bg-black/5 p-1 rounded"><input type="radio" v-model="formReport.glandularSub" value="262 Endometrial" :required="formReport.glandularMain === 'Atypical glandular cells'" class="w-3 h-3 text-amber-500 focus:ring-amber-500" :disabled="viewMode"> 262 Endometrial</label>
+                                                        <label class="flex items-center gap-2 text-[11px] theme-text cursor-pointer hover:bg-black/5 p-1 rounded"><input type="radio" v-model="formReport.glandularSub" value="263 NOS" :required="formReport.glandularMain === 'Atypical glandular cells'" class="w-3 h-3 text-amber-500 focus:ring-amber-500" :disabled="viewMode"> 263 NOS</label>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Atypical glandular cells favor neoplasia -->
+                                                <div class="flex flex-col gap-1">
+                                                    <label class="flex items-start gap-2 text-[12px] theme-text font-bold cursor-pointer hover:bg-black/5 p-1 rounded transition" :class="{'bg-amber-500/10': formReport.glandularMain==='Atypical glandular cells favor neoplasia', 'opacity-50 cursor-not-allowed': viewMode}">
+                                                        <input type="radio" v-model="formReport.glandularMain" value="Atypical glandular cells favor neoplasia" class="mt-0.5 w-3.5 h-3.5 text-amber-500 focus:ring-amber-500" :disabled="viewMode"> <span>Atypical glandular cells favor neoplasia</span>
+                                                    </label>
+                                                    <div v-show="formReport.glandularMain === 'Atypical glandular cells favor neoplasia'" class="ml-5 pl-2 border-l-2 border-amber-200 space-y-1 animate-slide-up">
+                                                        <label class="flex items-center gap-2 text-[11px] theme-text cursor-pointer hover:bg-black/5 p-1 rounded"><input type="radio" v-model="formReport.glandularSub" value="271 Endocervical" :required="formReport.glandularMain === 'Atypical glandular cells favor neoplasia'" class="w-3 h-3 text-amber-500 focus:ring-amber-500" :disabled="viewMode"> 271 Endocervical</label>
+                                                        <label class="flex items-center gap-2 text-[11px] theme-text cursor-pointer hover:bg-black/5 p-1 rounded"><input type="radio" v-model="formReport.glandularSub" value="272 Endometrial" :required="formReport.glandularMain === 'Atypical glandular cells favor neoplasia'" class="w-3 h-3 text-amber-500 focus:ring-amber-500" :disabled="viewMode"> 272 Endometrial</label>
+                                                        <label class="flex items-center gap-2 text-[11px] theme-text cursor-pointer hover:bg-black/5 p-1 rounded"><input type="radio" v-model="formReport.glandularSub" value="273 NOS" :required="formReport.glandularMain === 'Atypical glandular cells favor neoplasia'" class="w-3 h-3 text-amber-500 focus:ring-amber-500" :disabled="viewMode"> 273 NOS</label>
+                                                    </div>
+                                                </div>
+
+                                                <!-- AIS -->
+                                                <label class="flex items-start gap-2 text-[12px] theme-text font-bold cursor-pointer hover:bg-black/5 p-1 rounded transition" :class="{'bg-amber-500/10': formReport.glandularMain==='281 Endocervical adenocarcinoma in situ (AIS)', 'opacity-50 cursor-not-allowed': viewMode}">
+                                                    <input type="radio" v-model="formReport.glandularMain" value="281 Endocervical adenocarcinoma in situ (AIS)" class="mt-0.5 w-3.5 h-3.5 text-amber-500 focus:ring-amber-500" :disabled="viewMode"> <span>281 Endocervical adenocarcinoma in situ (AIS)</span>
+                                                </label>
+
+                                                <!-- Adenocarcinoma -->
+                                                <div class="flex flex-col gap-1">
+                                                    <label class="flex items-start gap-2 text-[12px] theme-text font-bold cursor-pointer hover:bg-black/5 p-1 rounded transition" :class="{'bg-amber-500/10': formReport.glandularMain==='Adenocarcinoma', 'opacity-50 cursor-not-allowed': viewMode}">
+                                                        <input type="radio" v-model="formReport.glandularMain" value="Adenocarcinoma" class="mt-0.5 w-3.5 h-3.5 text-amber-500 focus:ring-amber-500" :disabled="viewMode"> <span>Adenocarcinoma</span>
+                                                    </label>
+                                                    <div v-show="formReport.glandularMain === 'Adenocarcinoma'" class="ml-5 pl-2 border-l-2 border-amber-200 space-y-1 animate-slide-up">
+                                                        <label class="flex items-center gap-2 text-[11px] theme-text cursor-pointer hover:bg-black/5 p-1 rounded"><input type="radio" v-model="formReport.glandularSub" value="291 Endocervical" :required="formReport.glandularMain === 'Adenocarcinoma'" class="w-3 h-3 text-amber-500 focus:ring-amber-500" :disabled="viewMode"> 291 Endocervical</label>
+                                                        <label class="flex items-center gap-2 text-[11px] theme-text cursor-pointer hover:bg-black/5 p-1 rounded"><input type="radio" v-model="formReport.glandularSub" value="292 Endometrial" :required="formReport.glandularMain === 'Adenocarcinoma'" class="w-3 h-3 text-amber-500 focus:ring-amber-500" :disabled="viewMode"> 292 Endometrial</label>
+                                                        <label class="flex items-center gap-2 text-[11px] theme-text cursor-pointer hover:bg-black/5 p-1 rounded"><input type="radio" v-model="formReport.glandularSub" value="293 Not otherwise specified (NOS)" :required="formReport.glandularMain === 'Adenocarcinoma'" class="w-3 h-3 text-amber-500 focus:ring-amber-500" :disabled="viewMode"> 293 Not otherwise specified (NOS)</label>
+                                                    </div>
+                                                </div>
+
+                                            </div>
+                                        </div>
+
                                     </div>
-                                    <div class="pt-2 mt-auto">
-                                        <label class="label-sm text-violet-600 flex items-center gap-1.5"><i class="ph ph-chat-text text-base text-violet-500"></i> Comment</label>
-                                        <textarea v-model="formReport.comment" rows="2" class="input-std focus:ring-2 focus:ring-violet-500 font-medium resize-none" placeholder="อธิบายข้อมูลเพิ่มเติม..." :disabled="viewMode"></textarea>
+                                </div>
+                                
+                                <!-- 300 OTHER MALIGNANT & Comment -->
+                                <div class="p-3 md:p-4 border-b theme-border bg-rose-500/5">
+                                    <h3 class="font-black text-rose-600 mb-2 text-[14px] border-l-[3px] border-rose-500 pl-2">300 OTHER MALIGNANT NEOPLASMS</h3>
+                                    <input v-model="formReport.cat300" type="text" class="input-std focus:ring-2 focus:ring-rose-500 font-bold text-[13px] py-1.5" placeholder="พิมพ์คำอธิบาย (ถ้ามี)..." :disabled="viewMode">
+                                    
+                                    <div class="pt-3 mt-1 border-t border-rose-500/10">
+                                        <label class="label-sm text-slate-600 flex items-center gap-1.5"><i class="ph ph-chat-text text-base"></i> Comment</label>
+                                        <textarea v-model="formReport.comment" rows="2" class="input-std focus:ring-2 focus:ring-slate-500 font-medium resize-none text-[13px] py-1.5" placeholder="อธิบายข้อมูลเพิ่มเติม..." :disabled="viewMode"></textarea>
                                     </div>
                                 </div>
                             </div>
-
                         </div>
 
-                        <!-- Signatures -->
-                        <div class="p-3 md:p-4 border-b theme-border bg-black/5">
-                            <h3 class="font-black theme-text mb-3 text-[15px] border-l-[3px] border-slate-400 pl-2">Signatures</h3>
+                        <!-- ================= SIGNATURES (Full Width Bottom) ================= -->
+                        <div class="p-3 md:p-4 bg-black/5">
+                            <h3 class="font-black theme-text mb-3 text-[14px] border-l-[3px] border-slate-400 pl-2">Signatures</h3>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                                 
                                 <div class="bg-indigo-500/10 p-3 rounded-xl border border-indigo-500/20 shadow-sm relative overflow-hidden">
                                     <div class="absolute -right-4 -top-4 w-20 h-20 bg-indigo-500/10 rounded-full blur-xl"></div>
-                                    <h4 class="font-black text-indigo-600 mb-2.5 flex items-center gap-1.5 relative z-10 text-[14px]"><i class="ph ph-microscope text-lg"></i> Cytotechnologist</h4>
+                                    <h4 class="font-black text-indigo-600 mb-2 flex items-center gap-1.5 relative z-10 text-[13px]"><i class="ph ph-microscope text-base"></i> Cytotechnologist</h4>
                                     <div class="space-y-2 relative z-10">
                                         <div>
-                                            <label class="label-sm text-indigo-600">Name <span class="text-red-500">*</span></label>
-                                            <select v-model="formReport.cytoName" class="input-std focus:ring-2 focus:ring-indigo-400 font-bold" required :disabled="viewMode">
+                                            <select v-model="formReport.cytoName" class="input-std focus:ring-2 focus:ring-indigo-400 font-bold text-[12px] py-1.5" required :disabled="viewMode">
                                                 <option value="" disabled selected>เลือกผู้รายงาน...</option>
                                                 <option v-for="(name, idx) in masterCytoTechs" :key="'cy-'+idx" :value="name">{{ name }}</option>
                                             </select>
                                         </div>
                                         <div class="grid grid-cols-2 gap-2.5">
-                                            <div><label class="label-sm text-indigo-600">Date <span class="text-red-500">*</span></label><input type="date" v-model="formReport.cytoDate" class="input-std focus:ring-2 focus:ring-indigo-400 font-bold" required :disabled="viewMode"></div>
-                                            <div><label class="label-sm text-indigo-600">Time <span class="text-red-500">*</span></label><input type="time" v-model="formReport.cytoTime" class="input-std focus:ring-2 focus:ring-indigo-400 font-bold" required :disabled="viewMode"></div>
+                                            <div><input type="date" v-model="formReport.cytoDate" class="input-std focus:ring-2 focus:ring-indigo-400 font-bold text-[12px] py-1.5" required :disabled="viewMode"></div>
+                                            <div><input type="time" v-model="formReport.cytoTime" class="input-std focus:ring-2 focus:ring-indigo-400 font-bold text-[12px] py-1.5" required :disabled="viewMode"></div>
                                         </div>
                                     </div>
                                 </div>
 
                                 <div class="bg-rose-500/5 p-3 rounded-xl border transition-colors shadow-sm relative overflow-hidden" :class="formReport.hasPatho ? 'border-rose-500/30 bg-rose-500/10' : 'theme-border'">
                                     <div class="absolute -right-4 -top-4 w-20 h-20 bg-rose-500/10 rounded-full blur-xl"></div>
-                                    <label class="flex items-center gap-2 mb-2.5 relative z-10" :class="viewMode ? 'cursor-not-allowed' : 'cursor-pointer'">
+                                    <label class="flex items-center gap-2 mb-2 relative z-10" :class="viewMode ? 'cursor-not-allowed' : 'cursor-pointer'">
                                         <input type="checkbox" v-model="formReport.hasPatho" class="w-3.5 h-3.5 text-rose-500 focus:ring-rose-500 rounded border-slate-300" :disabled="viewMode">
-                                        <h4 class="font-black flex items-center gap-1.5 text-[14px]" :class="formReport.hasPatho ? 'text-rose-600' : 'theme-text-muted'"><i class="ph ph-stethoscope text-lg"></i> Pathologist</h4>
+                                        <h4 class="font-black flex items-center gap-1.5 text-[13px]" :class="formReport.hasPatho ? 'text-rose-600' : 'theme-text-muted'"><i class="ph ph-stethoscope text-base"></i> Pathologist</h4>
                                     </label>
                                     
                                     <div v-show="formReport.hasPatho" class="space-y-2 animate-slide-up relative z-10">
                                         <div>
-                                            <label class="label-sm text-rose-600">Name <span class="text-red-500">*</span></label>
-                                            <select v-model="formReport.pathoName" class="input-std focus:ring-2 focus:ring-rose-400 font-bold" :required="formReport.hasPatho" :disabled="viewMode">
+                                            <select v-model="formReport.pathoName" class="input-std focus:ring-2 focus:ring-rose-400 font-bold text-[12px] py-1.5" :required="formReport.hasPatho" :disabled="viewMode">
                                                 <option value="" disabled selected>เลือกพยาธิแพทย์...</option>
                                                 <option v-for="(name, idx) in masterPathos" :key="'pa-'+idx" :value="name">{{ name }}</option>
                                             </select>
                                         </div>
                                         <div class="grid grid-cols-2 gap-2.5">
-                                            <div><label class="label-sm text-rose-600">Date <span class="text-red-500">*</span></label><input type="date" v-model="formReport.pathoDate" class="input-std focus:ring-2 focus:ring-rose-400 font-bold" :required="formReport.hasPatho" :disabled="viewMode"></div>
-                                            <div><label class="label-sm text-rose-600">Time <span class="text-red-500">*</span></label><input type="time" v-model="formReport.pathoTime" class="input-std focus:ring-2 focus:ring-rose-400 font-bold" :required="formReport.hasPatho" :disabled="viewMode"></div>
+                                            <div><input type="date" v-model="formReport.pathoDate" class="input-std focus:ring-2 focus:ring-rose-400 font-bold text-[12px] py-1.5" :required="formReport.hasPatho" :disabled="viewMode"></div>
+                                            <div><input type="time" v-model="formReport.pathoTime" class="input-std focus:ring-2 focus:ring-rose-400 font-bold text-[12px] py-1.5" :required="formReport.hasPatho" :disabled="viewMode"></div>
                                         </div>
                                     </div>
-                                    <div v-show="!formReport.hasPatho && !viewMode" class="text-[10px] theme-text-muted font-medium italic mt-1.5 relative z-10">ติ๊กเลือกเพื่อระบุชื่อพยาธิแพทย์</div>
+                                    <div v-show="!formReport.hasPatho && !viewMode" class="text-[10px] theme-text-muted font-medium italic relative z-10">ติ๊กเลือกเพื่อระบุชื่อพยาธิแพทย์</div>
                                 </div>
-                                
                             </div>
                         </div>
 
