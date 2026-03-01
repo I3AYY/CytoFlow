@@ -1,5 +1,5 @@
 // --- CONFIGURATION ---
-const MASTER_SHEET_ID = 'XXXXX'; // โปรดระบุ ID ของคุณ (แก้ไขให้ตรงกับของคุณด้วยนะครับ)
+const MASTER_SHEET_ID = 'XXXXX'; // โปรดระบุ ID ของคุณ
 
 function doGet() {
   return HtmlService.createTemplateFromFile('index')
@@ -196,7 +196,6 @@ function apiVerifyOtp(username, inputOtp) {
   } catch (e) { return { status: 'error', message: 'Verify Error: ' + e.message }; }
 }
 
-// --- API: VERIFY PASSWORD FOR LOCK SCREEN ---
 function apiVerifyPassword(username, password) {
   try {
     const sheet = SpreadsheetApp.openById(MASTER_SHEET_ID).getSheetByName('Users');
@@ -220,9 +219,10 @@ function apiGetDashboardData(year) {
     let patients = [];
 
     if (lastRow >= 2) {
-      const data = sheet.getRange(2, 1, lastRow - 1, 43).getValues();
+      // ดึงข้อมูล 42 คอลัมน์ (Index 0 ถึง 41)
+      const data = sheet.getRange(2, 1, lastRow - 1, 42).getValues();
       data.forEach((r, index) => {
-        const status = r[42] ? String(r[42]) : "Pending"; 
+        const status = r[41] ? String(r[41]) : "Pending"; // AP = 41
         
         stats.total++;
         if (status === "Reported") stats.reported++;
@@ -236,16 +236,22 @@ function apiGetDashboardData(year) {
           clinFind: r[20], clinDx: r[21], lastPap: r[22], method: r[23], registerName: r[24],
           
           regTimestamp: formatDateTimeVal(r[25]),
-          adequacy: r[26], adequacyDetail: r[27], additional: r[28], 
           
-          // เพิ่มการดึงข้อมูล Organism (Col AD=29) และ Non-neoplastic (Col AE=30)
+          adequacy: r[26], adequacyDetail: r[27], additional: r[28], 
           organism: r[29] ? String(r[29]) : "",
           nonNeo: r[30] ? String(r[30]) : "",
           
-          cat300: r[36], comment: r[37], 
+          // ดึงข้อมูล 200 EPITHELIAL (Col AF - AI)
+          squamousMain: r[31] ? String(r[31]) : "",
+          squamousSub: r[32] ? String(r[32]) : "",
+          glandularMain: r[33] ? String(r[33]) : "",
+          glandularSub: r[34] ? String(r[34]) : "",
           
-          cytoName: r[38], cytoDateTime: String(r[39]), 
-          pathoName: r[40], pathoDateTime: String(r[41]), 
+          // เลื่อนข้อมูล 300, Comment, Signatures (Col AJ - AP)
+          cat300: r[35], comment: r[36], 
+          
+          cytoName: r[37], cytoDateTime: String(r[38]), 
+          pathoName: r[39], pathoDateTime: String(r[40]), 
           
           status: status 
         });
@@ -277,10 +283,11 @@ function apiRegisterSample(form, year, username) {
       form.lastPap, form.method, form.registerName
     ]; 
     
-    record.push(new Date()); // Col Z: Timestamp
+    record.push(new Date()); // Col Z: Timestamp (Index 25)
     
-    for(let i = 0; i < 16; i++) { record.push(""); }
-    record.push("Pending"); // Col AQ
+    // เติมช่องว่างสำหรับข้อมูลรายงานผล AA ถึง AO (15 คอลัมน์)
+    for(let i = 0; i < 15; i++) { record.push(""); }
+    record.push("Pending"); // Col AP (Index 41)
 
     sheet.appendRow(record);
     logData(year, "Register", "Created new sample", username, cytoNo);
@@ -320,20 +327,26 @@ function apiSubmitReport(form, year, username) {
     sheet.getRange(row, 28).setValue(form.adequacyDetail); // Col AB
     sheet.getRange(row, 29).setValue(form.additional);     // Col AC
     
-    // บันทึกข้อมูลหมวด 100 Negative
     sheet.getRange(row, 30).setValue(form.organism);       // Col AD
     sheet.getRange(row, 31).setValue(form.nonNeo);         // Col AE
     
-    sheet.getRange(row, 37).setValue(form.cat300);         
-    sheet.getRange(row, 38).setValue(form.comment);        
+    // บันทึกข้อมูลหมวด 200 EPITHELIAL
+    sheet.getRange(row, 32).setValue(form.squamousMain);   // Col AF
+    sheet.getRange(row, 33).setValue(form.squamousSub);    // Col AG
+    sheet.getRange(row, 34).setValue(form.glandularMain);  // Col AH
+    sheet.getRange(row, 35).setValue(form.glandularSub);   // Col AI
     
-    sheet.getRange(row, 39).setValue(form.cytoName);       
-    sheet.getRange(row, 40).setValue(form.cytoDateTime ? "'" + form.cytoDateTime : "");   
+    // เลื่อนข้อมูลส่วนที่เหลือ
+    sheet.getRange(row, 36).setValue(form.cat300);         // Col AJ
+    sheet.getRange(row, 37).setValue(form.comment);        // Col AK
     
-    sheet.getRange(row, 41).setValue(form.pathoName);      
-    sheet.getRange(row, 42).setValue(form.pathoDateTime ? "'" + form.pathoDateTime : "");  
+    sheet.getRange(row, 38).setValue(form.cytoName);       // Col AL
+    sheet.getRange(row, 39).setValue(form.cytoDateTime ? "'" + form.cytoDateTime : "");   // Col AM
     
-    sheet.getRange(row, 43).setValue("Reported");          
+    sheet.getRange(row, 40).setValue(form.pathoName);      // Col AN
+    sheet.getRange(row, 41).setValue(form.pathoDateTime ? "'" + form.pathoDateTime : "");  // Col AO
+    
+    sheet.getRange(row, 42).setValue("Reported");          // Col AP
 
     const cytoNo = sheet.getRange(row, 1).getValue();
     
