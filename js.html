@@ -21,7 +21,7 @@ const app = createApp({
         const loginStep = ref(1);
         const otpInput = ref('');
         const otpMessage = ref('');
-        const appVersion = "1.2.0 AI Edition";
+        const appVersion = "1.2.5 AI Edition";
         
         // --- Security / Lock Screen ---
         const isLocked = ref(false);
@@ -67,6 +67,11 @@ const app = createApp({
         const masterAdequacy = ref([]);
         const masterCytoTechs = ref([]);
         const masterPathos = ref([]);
+        
+        // NEW: Master data for section 200
+        const masterSquamous = ref([]);
+        const masterGlandular = ref([]);
+
         const masterContras = [
             'ไม่ใช้ฮอร์โมน/ไม่คุมกำเนิด', 'กินยาคุมกำเนิด', 'ฉีดยาคุมกำเนิด', 
             'ทำหมัน', 'ฝังยาคุมกำเนิด', 'ใส่ห่วงคุมกำเนิด', 'ถุงยางอนามัย', 'อื่นๆ (ระบุ)'
@@ -127,12 +132,11 @@ const app = createApp({
             
             // State สำหรับหมวด 200 EPITHELIAL CELLS ABNORMALITIES
             squamousMain: '',
-            squamousSubSingle: '',
-            squamousSubMulti: [],
-            vainOption: '',
+            squamousSubSingle: '', // ใช้รับค่าจาก Dropdown
+            vainOption: '',        // ใช้รับค่าจาก Dropdown สำหรับ 241 SIL
             
             glandularMain: '',
-            glandularSub: '',
+            glandularSub: '',      // ใช้รับค่าจาก Dropdown
 
             cat300: '', comment: '',
             cytoName: '', cytoDate: '', cytoTime: '',
@@ -140,10 +144,11 @@ const app = createApp({
         });
 
         // --- Watchers สำหรับรีเซ็ตตัวเลือกย่อยของหมวด 200 เมื่อเปลี่ยนหมวดหลัก ---
-        watch(() => formReport.squamousMain, () => {
-             formReport.squamousSubSingle = '';
-             formReport.squamousSubMulti = [];
-             formReport.vainOption = '';
+        watch(() => formReport.squamousMain, (newVal, oldVal) => {
+             if(oldVal && newVal !== oldVal) {
+                 formReport.squamousSubSingle = '';
+                 formReport.vainOption = '';
+             }
         });
         
         watch(() => formReport.squamousSubSingle, (newVal) => {
@@ -152,8 +157,10 @@ const app = createApp({
              }
         });
         
-        watch(() => formReport.glandularMain, () => {
-             formReport.glandularSub = '';
+        watch(() => formReport.glandularMain, (newVal, oldVal) => {
+             if(oldVal && newVal !== oldVal) {
+                 formReport.glandularSub = '';
+             }
         });
 
         // --- THEME LOGIC ---
@@ -201,10 +208,7 @@ const app = createApp({
             }
         };
 
-        const handleMainScroll = (e) => {
-            // ไม่ต้องย่อกราฟเมื่อเลื่อนหน้าต่างหลัก
-        };
-
+        const handleMainScroll = (e) => {};
         const handleTableScroll = (e) => {
             if (page.value === 'statistics') {
                 const scrollTop = e.target.scrollTop;
@@ -279,6 +283,26 @@ const app = createApp({
         const filteredContras = computed(() => {
             return masterContras.filter(c => c.toLowerCase().includes(ui.searchContra.toLowerCase()));
         });
+
+        // Computed สำหรับ Dropdown หมวด 200
+        const squamousDetailOptions = computed(() => {
+            if (!formReport.squamousMain) return [];
+            const filtered = masterSquamous.value.filter(x => x.main === formReport.squamousMain && x.detail1);
+            return [...new Set(filtered.map(x => x.detail1))];
+        });
+
+        const squamousSubDetailOptions = computed(() => {
+            if (formReport.squamousSubSingle !== '241 SIL') return [];
+            const filtered = masterSquamous.value.filter(x => x.detail1 === '241 SIL' && x.detail2);
+            return [...new Set(filtered.map(x => x.detail2))];
+        });
+
+        const glandularDetailOptions = computed(() => {
+            if (!formReport.glandularMain || formReport.glandularMain === '281 Endocervical adenocarcinoma in situ (AIS)') return [];
+            const filtered = masterGlandular.value.filter(x => x.main === formReport.glandularMain && x.detail1);
+            return [...new Set(filtered.map(x => x.detail1))];
+        });
+
 
         const closeAllDropdowns = () => { 
             ui.showUnitList = false; 
@@ -583,6 +607,10 @@ const app = createApp({
                     masterAdequacy.value = res.adequacyMaster || [];
                     masterCytoTechs.value = res.cytoTechs || [];
                     masterPathos.value = res.pathos || []; 
+                    
+                    // NEW: โหลด Master Data ของหมวด 200
+                    masterSquamous.value = res.masterSquamous || [];
+                    masterGlandular.value = res.masterGlandular || [];
                 } 
             } catch(e) {
                 console.error("Load Master Data Error: ", e);
@@ -683,6 +711,12 @@ const app = createApp({
                 const res = await runGas('apiGetDashboardData', config.selectedYear);
                 if (res && res.status === 'success') {
                     Object.assign(stats, res.stats); 
+                    
+                    // เพิ่ม flag showTAT ให้แต่ละ row แบบ default = false
+                    if (res.patients) {
+                        res.patients.forEach(p => { p.showTAT = false; });
+                    }
+                    
                     patients.value = res.patients || [];
                     
                     if (page.value === 'statistics' && isDashboardTopOpen.value) {
@@ -991,22 +1025,20 @@ const app = createApp({
                 });
             }
             
-            // นำข้อมูล Squamous คืนฟอร์ม (หมวด 200)
+            // นำข้อมูล Squamous คืนฟอร์ม (หมวด 200 - อัปเดตใหม่เป็น Single Select Dropdown)
             formReport.squamousMain = patient.squamousMain || '';
             formReport.squamousSubSingle = ''; 
-            formReport.squamousSubMulti = []; 
             formReport.vainOption = '';
             
             if (patient.squamousSub) {
-                if (formReport.squamousMain === 'Low grade squamous intraepithelial lesion (LSIL) encompassing') {
-                    formReport.squamousSubMulti = patient.squamousSub.split(', ').filter(Boolean);
+                if (patient.squamousSub.startsWith('241 SIL - ')) {
+                    formReport.squamousSubSingle = '241 SIL';
+                    formReport.vainOption = patient.squamousSub.replace('241 SIL - ', '');
                 } else {
-                    if (patient.squamousSub.startsWith('241 SIL - ')) {
-                        formReport.squamousSubSingle = '241 SIL';
-                        formReport.vainOption = patient.squamousSub.replace('241 SIL - ', '');
-                    } else {
-                        formReport.squamousSubSingle = patient.squamousSub;
-                    }
+                    // หากเจอข้อมูลแบบเก่าที่เป็น Multi-select (เช่น "221 HPV change, 222 CIN I") 
+                    // ระบบจะพยายามตัดเอาตัวแรกมาใส่ เพื่อความเข้ากันได้กับ Dropdown ใหม่แบบเลือกเดียว
+                    const firstOption = patient.squamousSub.split(', ')[0];
+                    formReport.squamousSubSingle = firstOption || '';
                 }
             }
 
@@ -1047,13 +1079,22 @@ const app = createApp({
                 return;
             }
             
-            // Validation: หมวด Squamous Sub
-            if (formReport.squamousMain === 'Low grade squamous intraepithelial lesion (LSIL) encompassing' && formReport.squamousSubMulti.length === 0) {
-                 if(typeof Swal !== 'undefined') Swal.fire('ข้อมูลไม่ครบ', 'กรุณาเลือกตัวเลือกย่อยของ LSIL อย่างน้อย 1 ข้อ', 'warning'); 
+            // Validation: หมวด 200 Squamous
+            if (formReport.squamousMain && formReport.squamousMain !== 'Atypical squamous cell' && formReport.squamousMain !== 'Low grade squamous intraepithelial lesion (LSIL) encompassing' && formReport.squamousMain !== 'High grade squamous intraepithelial lesion (HSIL) encompassing') {
+                 // ข้าม หากเป็นค่าว่าง
+            } else if (formReport.squamousMain && !formReport.squamousSubSingle) {
+                if(typeof Swal !== 'undefined') Swal.fire('ข้อมูลไม่ครบ', 'กรุณาเลือกรายละเอียด Squamous cell', 'warning'); 
                  return;
             }
+
             if (formReport.squamousSubSingle === '241 SIL' && !formReport.vainOption) {
                  if(typeof Swal !== 'undefined') Swal.fire('ข้อมูลไม่ครบ', 'กรุณาเลือกระดับ VAIN', 'warning'); 
+                 return;
+            }
+
+            // Validation: หมวด 200 Glandular
+            if (formReport.glandularMain && formReport.glandularMain !== '281 Endocervical adenocarcinoma in situ (AIS)' && !formReport.glandularSub) {
+                if(typeof Swal !== 'undefined') Swal.fire('ข้อมูลไม่ครบ', 'กรุณาเลือกรายละเอียด Glandular cell', 'warning'); 
                  return;
             }
 
@@ -1088,13 +1129,9 @@ const app = createApp({
                     // สร้าง String สำหรับ Squamous Sub
                     let finalSqSub = '';
                     if (formReport.squamousMain) {
-                        if (formReport.squamousMain === 'Low grade squamous intraepithelial lesion (LSIL) encompassing') {
-                            finalSqSub = formReport.squamousSubMulti.join(', ');
-                        } else {
-                            finalSqSub = formReport.squamousSubSingle;
-                            if (finalSqSub === '241 SIL' && formReport.vainOption) {
-                                finalSqSub = `241 SIL - ${formReport.vainOption}`;
-                            }
+                        finalSqSub = formReport.squamousSubSingle;
+                        if (finalSqSub === '241 SIL' && formReport.vainOption) {
+                            finalSqSub = `241 SIL - ${formReport.vainOption}`;
                         }
                     }
 
@@ -1112,7 +1149,7 @@ const app = createApp({
                         squamousMain: formReport.squamousMain,
                         squamousSub: finalSqSub,
                         glandularMain: formReport.glandularMain,
-                        glandularSub: formReport.glandularSub,
+                        glandularSub: formReport.glandularMain === '281 Endocervical adenocarcinoma in situ (AIS)' ? '' : formReport.glandularSub,
 
                         cat300: formReport.cat300, 
                         comment: formReport.comment,
@@ -1237,7 +1274,8 @@ const app = createApp({
             submitRegister, handleLoginStep1, handleLoginStep2, handleLogout, fetchData, openRegisterPage, openEditMode, openViewMode,
             handleImageUpload, openChangePassword, selectUnit, selectDist, selectContra, togglePrevTx, toggleOrganism, toggleNonNeo, closeAllDropdowns,
             getMethodColor, getTAT,
-            filteredReportPatients, openReportList, openReportForm, formReport, adequacyDetailOptions, additionalOptions, submitReport
+            filteredReportPatients, openReportList, openReportForm, formReport, adequacyDetailOptions, additionalOptions, submitReport,
+            squamousDetailOptions, squamousSubDetailOptions, glandularDetailOptions
         };
     }
 });
