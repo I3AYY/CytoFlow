@@ -7,11 +7,11 @@
       --bg-input: rgba(255, 255, 255, 0.8);
       --text-main: #334155;
       --text-muted: #64748b;
-      --border-color: rgba(0, 0, 0, 0.08); /* ปรับให้มองเห็นเส้นชัดเจนขึ้นใน Light Mode */
+      --border-color: rgba(0, 0, 0, 0.08); 
       --border-input: #cbd5e1;
       --shadow-glass: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
       --glass-blur: blur(20px) saturate(180%);
-      --row-hover: rgba(0, 0, 0, 0.02); /* ปรับ Hover ใน Light Mode */
+      --row-hover: rgba(0, 0, 0, 0.02); 
   }
 
   [data-theme="dark"] {
@@ -74,25 +74,25 @@
       border-right: 1px solid var(--border-color);
   }
 
-  /* --- CHANGED: Inputs & Labels (ปรับให้คอมแพคขึ้น เตี้ยลง ลดระยะห่าง) --- */
+  /* --- CHANGED: Inputs & Labels (ปรับขนาด 14px สำหรับ Label และ 15px สำหรับ Input) --- */
   .label-sm { 
       display: block; 
-      font-size: 0.8rem; /* ลดจาก 0.85rem เล็กน้อย */
+      font-size: 0.875rem; /* 14px */
       font-weight: 700; 
       color: var(--text-muted); 
-      margin-bottom: 0.1rem; /* ลดระยะห่าง */
+      margin-bottom: 0.1rem; 
   }
   .input-std { 
       width: 100%; 
       border: 1px solid var(--border-input); 
-      padding: 0.25rem 0.5rem; /* ลด Padding บนล่าง เพื่อให้กล่องเตี้ยลง */
-      border-radius: 0.5rem; /* ลดความมนลงนิดหน่อยให้รับกับกล่องเตี้ย */
-      font-size: 0.85rem; /* ลดขนาดตัวอักษรลงนิดนึงเพื่อให้พอดีกล่อง */
+      padding: 0.35rem 0.6rem; /* ปรับ padding ให้สมส่วนกับ Text ที่ใหญ่ขึ้น */
+      border-radius: 0.5rem; 
+      font-size: 0.9375rem; /* 15px */
       outline: none; 
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
       background: var(--bg-input);
       color: var(--text-main);
-      min-height: 32px; /* กำหนดความสูงให้เตี้ยลง (เดิม 38px) */
+      min-height: 38px; /* ปรับความสูงขั้นต่ำให้รับกับขนาดตัวอักษร 15px */
   }
   .input-std:focus {
       transform: translateY(-1px);
@@ -136,11 +136,11 @@
   input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
   input[type="number"] { -moz-appearance: textfield; }
 
-  /* Energy Bar Animation (From User's Preference) */
+  /* Energy Bar Animation */
   .animate-energy-bar { background-size: 200% 200%; animation: energyFlow 3.2s linear infinite; }
   @keyframes energyFlow { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 
-  /* Deep Space & Pastel Blobs (Login) */
+  /* Deep Space & Pastel Blobs (Login/Lock Screen) */
   .bg-deep-space { background-color: #0f172a; } 
   @keyframes blob {
     0% { transform: translate(0px, 0px) scale(1); }
