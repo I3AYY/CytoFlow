@@ -28,24 +28,19 @@
         </div>
     </transition>
 
-    <!-- LOCK SCREEN OVERLAY (Redesigned) -->
+    <!-- LOCK SCREEN OVERLAY -->
     <transition name="screen-lock">
         <div v-if="isLocked && page !== 'login'" class="fixed inset-0 z-[90] bg-deep-space flex flex-col items-center justify-center p-6 text-white text-center overflow-hidden">
-            <!-- Background Blobs (Copied from Login) -->
+            <!-- Background Blobs -->
             <div class="absolute top-[-10%] left-[-5%] w-[500px] h-[500px] bg-indigo-500/40 rounded-full mix-blend-screen filter blur-[100px] animate-blob"></div>
             <div class="absolute top-[20%] right-[-10%] w-[400px] h-[400px] bg-teal-400/40 rounded-full mix-blend-screen filter blur-[100px] animate-blob animation-delay-2000"></div>
             <div class="absolute bottom-[-15%] left-[25%] w-[600px] h-[600px] bg-pink-500/30 rounded-full mix-blend-screen filter blur-[100px] animate-blob animation-delay-4000"></div>
 
             <div class="liquid-glass rounded-[2rem] p-10 w-full max-w-md relative z-10 text-center" style="--bg-card: rgba(255, 255, 255, 0.1); border-color: rgba(255,255,255,0.2);">
                 
-                <!-- App Info -->
-                <div class="inline-flex items-center justify-center w-20 h-20 mb-3 bg-white/20 rounded-2xl p-2.5 shadow-inner backdrop-blur-md mx-auto">
-                    <img :src="systemConfig.logoUrl" class="w-full h-full object-contain filter drop-shadow-lg blend-logo">
-                </div>
-                <h1 class="text-3xl font-extrabold tracking-tight mb-0.5 animated-pastel-text">CytoFlow</h1>
-                <span class="text-[10px] text-white bg-indigo-600/80 font-bold px-2 py-0.5 rounded-md mb-6 inline-block shadow-sm backdrop-blur-sm">v{{ appVersion }}</span>
-
-                <!-- User Info -->
+                <h1 class="text-4xl font-extrabold tracking-tight mb-1 animated-pastel-text">CytoFlow</h1>
+                <p class="text-[11px] text-slate-300 uppercase tracking-widest font-semibold mb-6">Cytology Laboratory Management<br>Information System</p>
+                
                 <div class="w-24 h-24 mx-auto mb-4 rounded-full overflow-hidden border-4 border-slate-700/50 shadow-xl relative z-10">
                     <img :src="user.image || 'https://via.placeholder.com/150?text=U'" class="w-full h-full object-cover">
                 </div>
@@ -63,7 +58,8 @@
                 </form>
                 
                 <div class="text-center pt-6 mt-6 border-t border-white/10">
-                    <p class="text-[10px] text-slate-400 font-medium">Developed by<br><span class="gimmick-hover cursor-pointer text-slate-300 font-bold mt-1">P. PURICUMPEE</span></p>
+                    <p class="text-[11px] text-slate-400 font-medium mb-1">Version {{ appVersion }}</p>
+                    <p class="text-[11px] text-slate-400 font-medium mt-2">Developed by<br><span class="gimmick-hover cursor-pointer text-slate-300 font-bold mt-1">P. PURICUMPEE</span></p>
                 </div>
             </div>
         </div>
@@ -197,6 +193,7 @@
                 <i class="ph ph-caret-left text-sm font-bold"></i>
             </button>
 
+            <!-- 1. Header & Logo -->
             <div class="p-4 border-b theme-border flex flex-col items-center gap-2 shrink-0 h-[110px] justify-center overflow-hidden">
                 <div class="flex items-center gap-3 w-full justify-center">
                     <div class="w-12 h-12 flex items-center justify-center cursor-pointer hover:scale-110 transition-transform shrink-0" @click="toggleLogo" title="Click to Pause/Play"><img ref="logoRef" :src="systemConfig.logoUrl" class="w-full h-full object-contain blend-logo"></div>
@@ -207,12 +204,14 @@
                 </div>
             </div>
             
-            <div v-show="isSidebarOpen" class="px-5 py-3 text-[10px] font-bold uppercase tracking-widest theme-text-muted text-center leading-relaxed border-b theme-border whitespace-normal bg-black/5">
+            <!-- 2. App Description -->
+            <div v-show="isSidebarOpen" class="px-5 py-3 text-[10px] font-bold uppercase tracking-widest theme-text-muted text-center leading-relaxed border-b theme-border whitespace-normal bg-black/5 shrink-0">
                 Cytology Laboratory<br>Management System
             </div>
             
-            <div class="p-4 border-b theme-border shrink-0 overflow-hidden">
-                <div @click="showProfileModal=true" class="flex items-center justify-center md:justify-start gap-3 mb-1 cursor-pointer hover:bg-black/5 p-2 rounded-xl transition-all group">
+            <!-- 3. Profile Info -->
+            <div class="p-4 border-b theme-border shrink-0 overflow-hidden bg-[var(--bg-sidebar)]">
+                <div @click="showProfileModal=true" class="flex items-center justify-center md:justify-start gap-3 cursor-pointer hover:bg-black/5 p-2 rounded-xl transition-all group">
                     <div class="w-11 h-11 rounded-full bg-slate-100 border-2 theme-border shadow-sm overflow-hidden flex items-center justify-center group-hover:ring-4 ring-indigo-200 transition-all shrink-0">
                         <img v-if="user.image" :src="user.image" class="w-full h-full object-cover">
                         <i v-else class="ph ph-user text-2xl text-slate-400"></i>
@@ -222,17 +221,22 @@
                         <div class="text-[11px] text-indigo-500 font-bold truncate">{{ user.position }}</div>
                     </div>
                 </div>
-                <div v-show="isSidebarOpen" class="mt-4 px-2">
-                    <label class="text-[10px] font-bold theme-text-muted uppercase tracking-widest">ปีงบประมาณ</label>
-                    <div class="relative mt-1">
-                        <select v-model="config.selectedYear" class="w-full p-2.5 bg-[var(--bg-input)] border theme-border rounded-xl text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 font-bold theme-text appearance-none cursor-pointer transition-all shadow-sm">
-                            <option v-for="(y, index) in config.years" :key="'yr-'+index" :value="y">{{ y }}</option>
-                        </select>
-                        <i class="ph ph-caret-down absolute right-3 top-3 text-slate-400 pointer-events-none"></i>
-                    </div>
+            </div>
+
+            <!-- 4. Fiscal Year Picker -->
+            <div v-show="isSidebarOpen" class="px-2 py-3 border-b theme-border shrink-0">
+                <label class="text-[14px] font-bold theme-text flex items-center justify-start gap-2 mb-1.5 px-3">
+                    <i class="ph ph-database text-[18px] text-indigo-500"></i> ข้อมูลปีงบประมาณ
+                </label>
+                <div class="relative group px-1">
+                    <select v-model="config.selectedYear" class="w-full bg-transparent hover:bg-black/5 text-[16px] rounded-2xl px-4 py-3 font-black appearance-none outline-none cursor-pointer transition-all text-left animated-pastel-text border-2 border-transparent focus:border-indigo-200">
+                        <option v-for="y in config.years" :key="y" :value="y" class="font-bold text-slate-700">{{ y }}</option>
+                    </select>
+                    <i class="ph ph-caret-down absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none group-hover:text-indigo-500 transition-colors"></i>
                 </div>
             </div>
 
+            <!-- 5. Navigation Links -->
             <nav class="flex-1 p-3 space-y-1.5 overflow-y-auto overflow-x-hidden">
                 <a href="#" @click.prevent="openRegisterPage" :class="['flex items-center gap-4 px-3 py-3.5 rounded-2xl transition-all group overflow-hidden', page === 'register' ? 'bg-pink-500/10 text-pink-600 shadow-sm border border-pink-500/20' : 'theme-text-muted hover:bg-black/5 hover:theme-text']" :title="!isSidebarOpen ? 'ลงทะเบียน' : ''">
                     <div class="w-8 flex justify-center"><i class="ph ph-user-plus text-2xl group-hover:text-pink-500 group-hover:-translate-y-1 transition-transform"></i></div>
@@ -283,10 +287,18 @@
                 <div v-if="page === 'statistics'" key="statistics" class="flex flex-col gap-4 h-full overflow-hidden">
                     <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 liquid-glass p-4 rounded-2xl shrink-0">
                         <div>
-                            <h2 class="text-2xl font-black theme-text">ภาพรวมการดำเนินงาน</h2>
-                            <p class="theme-text-muted text-sm font-medium">ปีงบประมาณ {{ config.selectedYear }}</p>
+                            <h2 class="text-xl md:text-2xl font-black theme-text">ภาพรวมการดำเนินงาน</h2>
                         </div>
-                        <div class="flex gap-3">
+                        <div class="flex flex-wrap items-center gap-3">
+                            <!-- เพิ่ม Dropdown แบบ Badge ให้เลือกปีงบประมาณที่ด้านบน -->
+                            <div class="relative group inline-flex items-center bg-black/5 px-3 py-1.5 rounded-lg border theme-border hover:bg-black/10 transition-all shadow-sm">
+                                <span class="theme-text-muted text-[13px] md:text-sm font-bold mr-1">ปีงบประมาณ</span>
+                                <select v-model="config.selectedYear" class="bg-transparent appearance-none outline-none cursor-pointer animated-pastel-text text-[15px] font-black pr-4 relative z-10 w-[60px]">
+                                    <option v-for="y in config.years" :key="'top-'+y" :value="y" class="font-bold text-slate-700">{{ y }}</option>
+                                </select>
+                                <i class="ph ph-caret-down absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none group-hover:text-indigo-500 transition-colors text-[10px]"></i>
+                            </div>
+
                             <button @click="isDashboardTopOpen = !isDashboardTopOpen" class="bg-[var(--bg-input)] hover:brightness-95 theme-text w-10 h-10 rounded-xl flex items-center justify-center transition shadow-sm border theme-border">
                                 <i class="ph ph-caret-up text-lg transition-transform duration-300" :class="!isDashboardTopOpen ? 'rotate-180' : ''"></i>
                             </button>
@@ -385,13 +397,20 @@
                 </div>
 
                 <!-- Dashboard (รายการผู้รับบริการ) -->
-                <div v-if="page === 'dashboard'" key="dashboard" class="flex flex-col gap-4 h-full overflow-hidden">
+                <div v-else-if="page === 'dashboard'" key="dashboard" class="flex flex-col gap-4 h-full overflow-hidden">
                     <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 liquid-glass p-4 rounded-2xl shrink-0">
                         <div>
-                            <h2 class="text-2xl font-black theme-text">รายการผู้รับบริการ</h2>
-                            <p class="theme-text-muted text-sm font-medium mt-1">ปีงบประมาณ {{ config.selectedYear }}</p>
+                            <h2 class="text-xl md:text-2xl font-black theme-text">รายการผู้รับบริการ</h2>
                         </div>
-                        <div class="flex gap-3">
+                        <div class="flex flex-wrap items-center gap-3">
+                            <!-- เพิ่ม Dropdown แบบ Badge ให้เลือกปีงบประมาณที่ด้านบน -->
+                            <div class="relative group inline-flex items-center bg-black/5 px-3 py-1.5 rounded-lg border theme-border hover:bg-black/10 transition-all shadow-sm">
+                                <span class="theme-text-muted text-[13px] md:text-sm font-bold mr-1">ปีงบประมาณ</span>
+                                <select v-model="config.selectedYear" class="bg-transparent appearance-none outline-none cursor-pointer animated-pastel-text text-[15px] font-black pr-4 relative z-10 w-[60px]">
+                                    <option v-for="y in config.years" :key="'top-'+y" :value="y" class="font-bold text-slate-700">{{ y }}</option>
+                                </select>
+                                <i class="ph ph-caret-down absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none group-hover:text-indigo-500 transition-colors text-[10px]"></i>
+                            </div>
                             <button @click="fetchData" class="bg-blue-50 hover:bg-blue-100 text-blue-700 px-4 py-2 rounded-xl shadow-sm transition flex items-center gap-2 text-sm font-bold border border-blue-200">
                                 <i class="ph ph-arrows-clockwise text-lg" :class="{'animate-spin': isSpinning}"></i> อัปเดตข้อมูล
                             </button>
@@ -609,7 +628,6 @@
                             </div>
                         </div>
 
-                        <!-- เพิ่มส่วนแสดงข้อมูลผู้ลงทะเบียน (เฉพาะในโหมด View) แบบเรียงในบรรทัดเดียวกัน -->
                         <div v-if="viewMode" class="bg-black/5 p-4 flex items-center justify-center gap-2 border-t theme-border text-center flex-wrap">
                             <span class="text-[14px] font-bold theme-text-muted flex items-center gap-1.5"><i class="ph ph-info text-base"></i> ลงทะเบียนโดย</span>
                             <span class="text-[14px] font-black text-indigo-500 bg-indigo-500/10 px-3 py-1 rounded-lg border border-indigo-500/20"><i class="ph ph-user text-sm mr-1"></i>{{ formReg.registerName || '-' }}</span>
@@ -630,10 +648,17 @@
                     
                     <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 liquid-glass p-4 rounded-2xl shrink-0">
                         <div>
-                            <h2 class="text-2xl font-black theme-text">รายงานผลทางเซลล์วิทยา (Cytology Report)</h2>
-                            <p class="theme-text-muted text-sm font-medium mt-1">ปีงบประมาณ {{ config.selectedYear }}</p>
+                            <h2 class="text-xl md:text-2xl font-black theme-text">รายงานผลทางเซลล์วิทยา (Cytology Report)</h2>
                         </div>
-                        <div class="flex gap-3">
+                        <div class="flex flex-wrap items-center gap-3">
+                            <!-- เพิ่ม Dropdown แบบ Badge ให้เลือกปีงบประมาณที่ด้านบน -->
+                            <div class="relative group inline-flex items-center bg-black/5 px-3 py-1.5 rounded-lg border theme-border hover:bg-black/10 transition-all shadow-sm">
+                                <span class="theme-text-muted text-[13px] md:text-sm font-bold mr-1">ปีงบประมาณ</span>
+                                <select v-model="config.selectedYear" class="bg-transparent appearance-none outline-none cursor-pointer animated-pastel-text text-[15px] font-black pr-4 relative z-10 w-[60px]">
+                                    <option v-for="y in config.years" :key="'top-'+y" :value="y" class="font-bold text-slate-700">{{ y }}</option>
+                                </select>
+                                <i class="ph ph-caret-down absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none group-hover:text-indigo-500 transition-colors text-[10px]"></i>
+                            </div>
                             <button @click="fetchData" class="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 px-4 py-2 rounded-xl shadow-sm transition flex items-center gap-2 text-sm font-bold border border-emerald-200">
                                 <i class="ph ph-arrows-clockwise text-lg" :class="{'animate-spin': isSpinning}"></i> อัปเดตข้อมูล
                             </button>
@@ -744,7 +769,7 @@
                         </div>
                     </div>
 
-                    <!-- Patient Info (Progressive Disclosure) -->
+                    <!-- Patient Info -->
                     <div class="liquid-glass rounded-2xl mb-3 overflow-hidden shadow-sm">
                         <div class="p-3 bg-[var(--bg-card)] border-b theme-border flex justify-between items-center cursor-pointer hover:bg-black/5 transition" @click="ui.showPatientInfo = !ui.showPatientInfo">
                             <h3 class="font-black theme-text flex items-center gap-2 text-[14px]"><i class="ph ph-user-circle text-lg text-indigo-500"></i> ข้อมูลผู้ป่วย (Patient Info)</h3>
@@ -806,7 +831,6 @@
                                 <div class="p-3 md:p-4 bg-emerald-500/5 border-b theme-border">
                                     <h3 class="font-black text-emerald-600 mb-3 text-[15px] border-l-[3px] border-emerald-500 pl-2">1. SPECIMEN ADEQUACY</h3>
                                     <div class="space-y-2">
-                                        <!-- อัปเดต Toggle / สีกรอบเป็น emerald / ทำ Highlight สำหรับ View Mode -->
                                         <div class="flex flex-col gap-2">
                                             <label class="flex items-center gap-2 p-2 border theme-border rounded-lg transition w-full" :class="[viewMode ? (formReport.adequacy==='010 Satisfactory' ? 'border-emerald-500 bg-emerald-500/20 ring-2 ring-emerald-500/50 opacity-100 shadow-sm' : 'opacity-30 grayscale cursor-not-allowed bg-[var(--bg-input)]') : (formReport.adequacy==='010 Satisfactory' ? 'border-emerald-500 bg-emerald-500/10 ring-2 ring-emerald-500/30' : 'bg-[var(--bg-input)] hover:bg-black/5 cursor-pointer')]">
                                                 <input @click="formReport.adequacy === '010 Satisfactory' ? formReport.adequacy = '' : formReport.adequacy = '010 Satisfactory'" :checked="formReport.adequacy === '010 Satisfactory'" type="radio" value="010 Satisfactory" class="text-emerald-500 focus:ring-emerald-500 w-4 h-4" :disabled="viewMode">
@@ -827,9 +851,10 @@
                                         <div class="bg-[var(--bg-input)] p-2.5 rounded-lg border theme-border shadow-sm flex flex-col md:flex-row gap-2 mt-2">
                                             <div class="flex-1">
                                                 <label class="label-sm">Additional (เพิ่มเติม)</label>
-                                                <select v-model="formReport.additional" class="input-std focus:ring-2 focus:ring-emerald-500 font-bold mt-1" :disabled="viewMode">
-                                                    <option value="">ไม่ระบุ</option>
-                                                    <option v-for="(opt, idx) in additionalOptions" :key="'add-'+idx" :value="opt.text">{{ opt.text }}</option>
+                                                <!-- ปรับแก้ Additional ตรงนี้ให้มี Dropdown เป็นสีเทาในตอนเริ่มต้น -->
+                                                <select v-model="formReport.additional" class="input-std focus:ring-2 focus:ring-emerald-500 mt-1 transition-colors" :class="!formReport.additional ? 'text-slate-400 font-normal' : 'font-bold theme-text'" :disabled="viewMode">
+                                                    <option value="" class="text-slate-400 font-normal">ระบุ...</option>
+                                                    <option v-for="(opt, idx) in additionalOptions" :key="'add-'+idx" :value="opt.text" class="text-slate-700 font-bold">{{ opt.text }}</option>
                                                 </select>
                                             </div>
                                             <div class="flex-1" v-if="formReport.additional === '029 Other'">
@@ -898,7 +923,7 @@
                                     
                                     <div class="space-y-4">
                                         
-                                        <!-- === SQUAMOUS CELL (New Redesign + Highlight) === -->
+                                        <!-- === SQUAMOUS CELL === -->
                                         <div class="bg-[var(--bg-card)] border theme-border rounded-xl p-3 shadow-sm">
                                             <h4 class="text-[13px] font-bold text-amber-700 uppercase tracking-widest mb-2 border-b border-amber-500/20 pb-1">Squamous Cell</h4>
                                             
@@ -939,7 +964,7 @@
                                             </div>
                                         </div>
 
-                                        <!-- === GLANDULAR CELL (New Redesign + Highlight) === -->
+                                        <!-- === GLANDULAR CELL === -->
                                         <div class="bg-[var(--bg-card)] border theme-border rounded-xl p-3 shadow-sm">
                                             <h4 class="text-[13px] font-bold text-amber-700 uppercase tracking-widest mb-2 border-b border-amber-500/20 pb-1">Glandular Cell</h4>
                                             
@@ -987,7 +1012,11 @@
                             <!-- 300 OTHER MALIGNANT -->
                             <div class="p-3 md:p-4 bg-rose-500/5 border-b md:border-b-0 md:border-r theme-border h-full flex flex-col justify-center">
                                 <h3 class="font-black text-rose-600 mb-2 text-[15px] border-l-[3px] border-rose-500 pl-2">300 OTHER MALIGNANT NEOPLASMS</h3>
-                                <input v-model="formReport.cat300" type="text" class="input-std focus:ring-2 focus:ring-rose-500 font-bold" placeholder="พิมพ์คำอธิบาย (ถ้ามี)..." :disabled="viewMode">
+                                <!-- ปรับแก้ 300 OTHER ตรงนี้ให้มี Dropdown เป็นสีเทาในตอนเริ่มต้น -->
+                                <select v-model="formReport.cat300" class="input-std focus:ring-2 focus:ring-rose-500 transition-colors" :class="!formReport.cat300 ? 'text-slate-400 font-normal' : 'font-bold theme-text'" :disabled="viewMode">
+                                    <option value="" class="text-slate-400 font-normal">ระบุ...</option>
+                                    <option v-for="(opt, idx) in masterCat300" :key="'c300-'+idx" :value="opt" class="text-slate-700 font-bold">{{ opt }}</option>
+                                </select>
                             </div>
                             <!-- Comment -->
                             <div class="p-3 md:p-4 bg-black/5 h-full flex flex-col">
