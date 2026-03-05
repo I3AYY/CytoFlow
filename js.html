@@ -21,13 +21,14 @@ const app = createApp({
         const loginStep = ref(1);
         const otpInput = ref('');
         const otpMessage = ref('');
-        const appVersion = "1.2.7 AI Edition"; // อัปเดตเวอร์ชัน 1.2.7
+        const appVersion = "1.2.8 AI Edition"; // อัปเดตแพตช์แก้ Bypass Lock Screen
         
         // --- Security / Lock Screen ---
         const isLocked = ref(false);
         const lockPassword = ref('');
         const lockError = ref('');
         let afkTimeout = null;
+        let sessionCheckInterval = null;
 
         // --- Theme ---
         const theme = ref('light'); 
@@ -68,10 +69,9 @@ const app = createApp({
         const masterCytoTechs = ref([]);
         const masterPathos = ref([]);
         
-        // Master data for section 200 & 300
         const masterSquamous = ref([]);
         const masterGlandular = ref([]);
-        const masterCat300 = ref([]); // NEW: Master Data for 300
+        const masterCat300 = ref([]); 
 
         const masterContras = [
             'ไม่ใช้ฮอร์โมน/ไม่คุมกำเนิด', 'กินยาคุมกำเนิด', 'ฉีดยาคุมกำเนิด', 
@@ -82,7 +82,6 @@ const app = createApp({
             'Chemotherapy', 'Hormone', 'อื่น ๆ (ระบุ)'
         ];
         
-        // Master Data สำหรับส่วน Report
         const masterOrganism = [
             '101 Trichomonas spp.', '102 Candida spp.', '103 Bacterial vaginosis', 
             '104 Actinomyces app.', '105 HSV', '109 Other organism'
@@ -131,13 +130,12 @@ const app = createApp({
             organismSelections: [], organismOtherText: '', 
             nonNeoSelections: [], 
             
-            // State สำหรับหมวด 200 EPITHELIAL CELLS ABNORMALITIES
             squamousMain: '',
-            squamousSubSingle: '', // ใช้รับค่าจาก Dropdown
-            vainOption: '',        // ใช้รับค่าจาก Dropdown สำหรับ 241 SIL
+            squamousSubSingle: '', 
+            vainOption: '',        
             
             glandularMain: '',
-            glandularSub: '',      // ใช้รับค่าจาก Dropdown
+            glandularSub: '',      
 
             cat300: '', comment: '',
             cytoName: '', cytoDate: '', cytoTime: '',
@@ -163,7 +161,6 @@ const app = createApp({
              }
         });
 
-        // --- THEME LOGIC ---
         const changeTheme = (newTheme) => {
             theme.value = newTheme;
             document.documentElement.setAttribute('data-theme', newTheme);
@@ -177,9 +174,13 @@ const app = createApp({
             }
         };
 
-        // --- AFK / SESSION TIMEOUT LOGIC (NEW: Security 1 Hour Auto Logout) ---
+        // --- AFK / SESSION TIMEOUT LOGIC (v1.2.8 AI Edition Security Update) ---
+        const AFK_LIMIT_MS = 25 * 60 * 1000; // 25 นาที ล็อคหน้าจอ
+        const SESSION_LIMIT_MS = 60 * 60 * 1000; // 1 ชั่วโมง บังคับออกจากระบบ
+
         const updateSessionActivity = () => {
-            if (page.value === 'login') return;
+            if (page.value === 'login' || isLocked.value) return;
+            
             const savedUserStr = localStorage.getItem('cytoUser_v99');
             if (savedUserStr) {
                 try {
@@ -191,21 +192,57 @@ const app = createApp({
         };
 
         const resetAfkTimer = () => {
-            clearTimeout(afkTimeout);
-            updateSessionActivity(); // บันทึกเวลาล่าสุดทุกครั้งที่มี Activity
-            if (page.value !== 'login' && !isLocked.value) {
-                afkTimeout = setTimeout(() => { lockScreen(); }, 25 * 60 * 1000); 
+            if (page.value === 'login') return;
+
+            if (!isLocked.value) {
+                updateSessionActivity(); 
+                clearTimeout(afkTimeout);
+                afkTimeout = setTimeout(() => { lockScreen(); }, AFK_LIMIT_MS); 
             }
         };
 
+        const startSessionMonitor = () => {
+            if (sessionCheckInterval) clearInterval(sessionCheckInterval);
+            
+            sessionCheckInterval = setInterval(() => {
+                if (page.value === 'login') return;
+
+                const savedUserStr = localStorage.getItem('cytoUser_v99');
+                if (savedUserStr) {
+                    try {
+                        const savedUser = JSON.parse(savedUserStr);
+                        const lastActive = savedUser.lastActive || 0;
+                        const timeElapsed = Date.now() - lastActive;
+
+                        if (timeElapsed > SESSION_LIMIT_MS) {
+                            forceLogout(true); 
+                        }
+                    } catch(e) {}
+                }
+            }, 60000); 
+        };
+
+        // [แก้ไขใหม่] ฟังก์ชันล็อคหน้าจอ: บันทึกสถานะการล็อคลง localStorage
         const lockScreen = () => {
             if (page.value === 'login') return;
             isLocked.value = true;
             lockPassword.value = '';
             lockError.value = '';
             clearTimeout(afkTimeout);
+
+            const savedUserStr = localStorage.getItem('cytoUser_v99');
+            if (savedUserStr) {
+                try {
+                    const savedUser = JSON.parse(savedUserStr);
+                    savedUser.isLocked = true; // ฝังสถานะล็อคไว้
+                    // อัปเดตเวลาเพื่อให้ตัวจับเวลา 1 ชั่วโมงคำนวณถูก ว่าโดนล็อคไปตั้งแต่เมื่อไหร่
+                    savedUser.lastActive = Date.now(); 
+                    localStorage.setItem('cytoUser_v99', JSON.stringify(savedUser));
+                } catch(e) {}
+            }
         };
 
+        // [แก้ไขใหม่] ฟังก์ชันปลดล็อค: ลบสถานะการล็อคออกจาก localStorage
         const unlockScreen = async () => {
             if (!lockPassword.value) return;
             isLoading.value = true;
@@ -214,6 +251,17 @@ const app = createApp({
                 const res = await runGas('apiVerifyPassword', user.username, lockPassword.value);
                 if (res.status === 'success') {
                     isLocked.value = false;
+                    
+                    const savedUserStr = localStorage.getItem('cytoUser_v99');
+                    if (savedUserStr) {
+                        try {
+                            const savedUser = JSON.parse(savedUserStr);
+                            savedUser.isLocked = false; // ปลดล็อคใน localStorage
+                            savedUser.lastActive = Date.now(); 
+                            localStorage.setItem('cytoUser_v99', JSON.stringify(savedUser));
+                        } catch(e) {}
+                    }
+
                     resetAfkTimer();
                 } else {
                     lockError.value = 'รหัสผ่านผิดพลาด ระบบกำลังออกจากระบบ...';
@@ -319,7 +367,6 @@ const app = createApp({
             const filtered = masterGlandular.value.filter(x => x.main === formReport.glandularMain && x.detail1);
             return [...new Set(filtered.map(x => x.detail1))];
         });
-
 
         const closeAllDropdowns = () => { 
             ui.showUnitList = false; 
@@ -580,20 +627,28 @@ const app = createApp({
                 if (!e.target.closest('.nonneo-dropdown')) ui.showNonNeoList = false;
             });
 
-            window.addEventListener('mousemove', resetAfkTimer);
-            window.addEventListener('keydown', resetAfkTimer);
-            window.addEventListener('click', resetAfkTimer);
+            window.addEventListener('mousemove', resetAfkTimer, { passive: true });
+            window.addEventListener('keydown', resetAfkTimer, { passive: true });
+            window.addEventListener('click', resetAfkTimer, { passive: true });
 
             try {
                 const savedUser = localStorage.getItem('cytoUser_v99');
                 if (savedUser) {
                     const parsed = JSON.parse(savedUser);
                     
-                    // --- NEW: Security Check (Auto Logout if inactive > 1 hour) ---
-                    const ONE_HOUR = 60 * 60 * 1000;
-                    if (parsed.lastActive && (Date.now() - parsed.lastActive > ONE_HOUR)) {
-                        localStorage.removeItem('cytoUser_v99'); // ลบข้อมูลการ Login
+                    // --- Security Check (ตรวจสอบ Session) ---
+                    if (parsed.lastActive && (Date.now() - parsed.lastActive > SESSION_LIMIT_MS)) {
+                        localStorage.removeItem('cytoUser_v99'); 
                         throw new Error("Session expired (Inactive for > 1 hr). Auto Logout.");
+                    }
+
+                    // --- [แก้ไขใหม่] โหลดสถานะ Lock Screen ---
+                    if (parsed.isLocked === true) {
+                        isLocked.value = true;
+                        // ให้มันเริ่มเช็ค Session 1 ชั่วโมงต่อ เผื่อผู้ใช้เปิดค้างหน้าล็อคไว้
+                    } else {
+                        isLocked.value = false;
+                        resetAfkTimer(); // ถ้าไม่ได้ล็อค ก็เริ่มจับเวลา 25 นาทีตามปกติ
                     }
 
                     if(parsed.user) Object.assign(user, parsed.user);
@@ -604,14 +659,26 @@ const app = createApp({
                         const currYear = parsed.currentFiscalYear ? parsed.currentFiscalYear.toString() : "";
                         config.selectedYear = config.years.includes(currYear) ? currYear : config.years[config.years.length - 1];
                     }
+                    
                     page.value = 'dashboard';
                     loadMasterData();
                     fetchData();
-                    resetAfkTimer();
+                    startSessionMonitor(); 
                 }
             } catch (e) { 
                 console.log(e.message);
                 localStorage.removeItem('cytoUser_v99'); 
+                
+                if (e.message.includes("Session expired") && typeof Swal !== 'undefined') {
+                    setTimeout(() => {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'เซสชันหมดอายุ',
+                            text: 'ระบบได้ทำการลงชื่อออกอัตโนมัติ เนื่องจากไม่มีการใช้งานระบบเกิน 1 ชั่วโมง (นโยบายรักษาความปลอดภัยข้อมูล PDPA)',
+                            confirmButtonText: 'เข้าสู่ระบบใหม่'
+                        });
+                    }, 500);
+                }
             }
         });
 
@@ -636,7 +703,7 @@ const app = createApp({
                     
                     masterSquamous.value = res.masterSquamous || [];
                     masterGlandular.value = res.masterGlandular || [];
-                    masterCat300.value = res.masterCat300 || []; // NEW: 300 OTHER
+                    masterCat300.value = res.masterCat300 || []; 
                 } 
             } catch(e) {
                 console.error("Load Master Data Error: ", e);
@@ -674,19 +741,22 @@ const app = createApp({
                     const currYear = res.currentFiscalYear ? res.currentFiscalYear.toString() : "";
                     config.selectedYear = config.years.includes(currYear) ? currYear : config.years[config.years.length - 1];
                     
+                    // [แก้ไขใหม่] ระบุว่าเริ่มเข้าสู่ระบบแล้ว ไม่ได้ล็อค
                     localStorage.setItem('cytoUser_v99', JSON.stringify({ 
                         user: res.user, 
                         years: res.years, 
                         currentFiscalYear: res.currentFiscalYear, 
                         systemLogo: systemConfig.logoUrl, 
                         theme: theme.value,
-                        lastActive: Date.now() // บันทึกเวลาเริ่มใช้งานครั้งแรก
+                        isLocked: false, 
+                        lastActive: Date.now() 
                     }));
                     
                     page.value = 'dashboard'; 
                     loadMasterData(); 
                     fetchData(); 
                     resetAfkTimer();
+                    startSessionMonitor(); 
                 } else { 
                     if(typeof Swal !== 'undefined') Swal.fire('OTP Failed', res.message, 'error'); 
                 }
@@ -711,11 +781,13 @@ const app = createApp({
             if (result.isConfirmed) forceLogout();
         };
 
-        const forceLogout = () => {
+        const forceLogout = (isExpired = false) => {
             localStorage.removeItem('cytoUser_v99'); 
             isLocked.value = false;
             isLoading.value = true;
             clearTimeout(afkTimeout);
+            if (sessionCheckInterval) clearInterval(sessionCheckInterval); 
+            
             setTimeout(() => {
                 user.name = ''; 
                 user.image = ''; 
@@ -727,6 +799,15 @@ const app = createApp({
                 formLogin.password = '';
                 Object.assign(formReg, defaultForm); 
                 isLoading.value = false;
+
+                if (isExpired && typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'เซสชันหมดอายุ',
+                        text: 'คุณไม่ได้ใช้งานระบบนานเกิน 1 ชั่วโมง ระบบจึงทำการลงชื่อออกอัตโนมัติเพื่อความปลอดภัยของข้อมูลผู้ป่วย (PDPA)',
+                        confirmButtonText: 'รับทราบ'
+                    });
+                }
             }, 800);
         };
 
@@ -1099,7 +1180,7 @@ const app = createApp({
             }
             
             if (formReport.squamousMain && formReport.squamousMain !== 'Atypical squamous cell' && formReport.squamousMain !== 'Low grade squamous intraepithelial lesion (LSIL) encompassing' && formReport.squamousMain !== 'High grade squamous intraepithelial lesion (HSIL) encompassing') {
-                 // ข้าม หากเป็นค่าว่าง
+                 // ข้าม
             } else if (formReport.squamousMain && !formReport.squamousSubSingle) {
                 if(typeof Swal !== 'undefined') Swal.fire('ข้อมูลไม่ครบ', 'กรุณาเลือกรายละเอียด Squamous cell', 'warning'); 
                  return;
