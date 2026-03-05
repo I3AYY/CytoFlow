@@ -21,7 +21,7 @@ const app = createApp({
         const loginStep = ref(1);
         const otpInput = ref('');
         const otpMessage = ref('');
-        const appVersion = "1.2.6 AI Edition"; // อัปเดตเวอร์ชัน
+        const appVersion = "1.2.7 AI Edition"; // อัปเดตเวอร์ชัน 1.2.7
         
         // --- Security / Lock Screen ---
         const isLocked = ref(false);
@@ -68,9 +68,10 @@ const app = createApp({
         const masterCytoTechs = ref([]);
         const masterPathos = ref([]);
         
-        // NEW: Master data for section 200
+        // Master data for section 200 & 300
         const masterSquamous = ref([]);
         const masterGlandular = ref([]);
+        const masterCat300 = ref([]); // NEW: Master Data for 300
 
         const masterContras = [
             'ไม่ใช้ฮอร์โมน/ไม่คุมกำเนิด', 'กินยาคุมกำเนิด', 'ฉีดยาคุมกำเนิด', 
@@ -143,7 +144,6 @@ const app = createApp({
             hasPatho: false, pathoName: '', pathoDate: '', pathoTime: ''
         });
 
-        // --- Watchers สำหรับรีเซ็ตตัวเลือกย่อยของหมวด 200 เมื่อเปลี่ยนหมวดหลัก ---
         watch(() => formReport.squamousMain, (newVal, oldVal) => {
              if(oldVal && newVal !== oldVal) {
                  formReport.squamousSubSingle = '';
@@ -167,14 +167,32 @@ const app = createApp({
         const changeTheme = (newTheme) => {
             theme.value = newTheme;
             document.documentElement.setAttribute('data-theme', newTheme);
-            const saved = JSON.parse(localStorage.getItem('cytoUser_v99') || '{}');
-            saved.theme = newTheme;
-            localStorage.setItem('cytoUser_v99', JSON.stringify(saved));
+            const savedStr = localStorage.getItem('cytoUser_v99');
+            if (savedStr) {
+                try {
+                    const saved = JSON.parse(savedStr);
+                    saved.theme = newTheme;
+                    localStorage.setItem('cytoUser_v99', JSON.stringify(saved));
+                } catch(e) {}
+            }
         };
 
-        // --- AFK / LOCK SCREEN LOGIC ---
+        // --- AFK / SESSION TIMEOUT LOGIC (NEW: Security 1 Hour Auto Logout) ---
+        const updateSessionActivity = () => {
+            if (page.value === 'login') return;
+            const savedUserStr = localStorage.getItem('cytoUser_v99');
+            if (savedUserStr) {
+                try {
+                    const savedUser = JSON.parse(savedUserStr);
+                    savedUser.lastActive = Date.now();
+                    localStorage.setItem('cytoUser_v99', JSON.stringify(savedUser));
+                } catch(e) {}
+            }
+        };
+
         const resetAfkTimer = () => {
             clearTimeout(afkTimeout);
+            updateSessionActivity(); // บันทึกเวลาล่าสุดทุกครั้งที่มี Activity
             if (page.value !== 'login' && !isLocked.value) {
                 afkTimeout = setTimeout(() => { lockScreen(); }, 25 * 60 * 1000); 
             }
@@ -284,7 +302,6 @@ const app = createApp({
             return masterContras.filter(c => c.toLowerCase().includes(ui.searchContra.toLowerCase()));
         });
 
-        // Computed สำหรับ Dropdown หมวด 200
         const squamousDetailOptions = computed(() => {
             if (!formReport.squamousMain) return [];
             const filtered = masterSquamous.value.filter(x => x.main === formReport.squamousMain && x.detail1);
@@ -571,6 +588,14 @@ const app = createApp({
                 const savedUser = localStorage.getItem('cytoUser_v99');
                 if (savedUser) {
                     const parsed = JSON.parse(savedUser);
+                    
+                    // --- NEW: Security Check (Auto Logout if inactive > 1 hour) ---
+                    const ONE_HOUR = 60 * 60 * 1000;
+                    if (parsed.lastActive && (Date.now() - parsed.lastActive > ONE_HOUR)) {
+                        localStorage.removeItem('cytoUser_v99'); // ลบข้อมูลการ Login
+                        throw new Error("Session expired (Inactive for > 1 hr). Auto Logout.");
+                    }
+
                     if(parsed.user) Object.assign(user, parsed.user);
                     if(parsed.systemLogo) systemConfig.logoUrl = parsed.systemLogo;
                     if(parsed.theme) changeTheme(parsed.theme);
@@ -585,6 +610,7 @@ const app = createApp({
                     resetAfkTimer();
                 }
             } catch (e) { 
+                console.log(e.message);
                 localStorage.removeItem('cytoUser_v99'); 
             }
         });
@@ -608,9 +634,9 @@ const app = createApp({
                     masterCytoTechs.value = res.cytoTechs || [];
                     masterPathos.value = res.pathos || []; 
                     
-                    // NEW: โหลด Master Data ของหมวด 200
                     masterSquamous.value = res.masterSquamous || [];
                     masterGlandular.value = res.masterGlandular || [];
+                    masterCat300.value = res.masterCat300 || []; // NEW: 300 OTHER
                 } 
             } catch(e) {
                 console.error("Load Master Data Error: ", e);
@@ -653,7 +679,8 @@ const app = createApp({
                         years: res.years, 
                         currentFiscalYear: res.currentFiscalYear, 
                         systemLogo: systemConfig.logoUrl, 
-                        theme: theme.value 
+                        theme: theme.value,
+                        lastActive: Date.now() // บันทึกเวลาเริ่มใช้งานครั้งแรก
                     }));
                     
                     page.value = 'dashboard'; 
@@ -712,7 +739,6 @@ const app = createApp({
                 if (res && res.status === 'success') {
                     Object.assign(stats, res.stats); 
                     
-                    // เพิ่ม flag showTAT ให้แต่ละ row แบบ default = false
                     if (res.patients) {
                         res.patients.forEach(p => { p.showTAT = false; });
                     }
@@ -969,7 +995,7 @@ const app = createApp({
 
         const openReportForm = (patient, isReadonly = false) => {
             viewMode.value = isReadonly;
-            ui.showPatientInfo = false; // บังคับให้เริ่มด้วยโหมดย่อเสมอ เพื่อประหยัดพื้นที่
+            ui.showPatientInfo = false; 
             
             formReport.rowId = patient.rowId; 
             formReport.cytoNo = patient.cytoNo; 
@@ -986,7 +1012,6 @@ const app = createApp({
                 ui.reportAdditionalOther = ''; 
             }
             
-            // นำข้อมูล Organism คืนค่าสู่ฟอร์ม
             formReport.organismSelections = []; 
             formReport.organismOtherText = '';
             if (patient.organism) {
@@ -1014,7 +1039,6 @@ const app = createApp({
                 });
             }
 
-            // นำข้อมูล Non-neoplastic คืนค่าสู่ฟอร์ม
             formReport.nonNeoSelections = [];
             if (patient.nonNeo) {
                 const parts = patient.nonNeo.split(',').map(s => s.trim());
@@ -1025,7 +1049,6 @@ const app = createApp({
                 });
             }
             
-            // นำข้อมูล Squamous คืนฟอร์ม (หมวด 200 - อัปเดตใหม่เป็น Single Select Dropdown)
             formReport.squamousMain = patient.squamousMain || '';
             formReport.squamousSubSingle = ''; 
             formReport.vainOption = '';
@@ -1035,14 +1058,11 @@ const app = createApp({
                     formReport.squamousSubSingle = '241 SIL';
                     formReport.vainOption = patient.squamousSub.replace('241 SIL - ', '');
                 } else {
-                    // หากเจอข้อมูลแบบเก่าที่เป็น Multi-select (เช่น "221 HPV change, 222 CIN I") 
-                    // ระบบจะพยายามตัดเอาตัวแรกมาใส่ เพื่อความเข้ากันได้กับ Dropdown ใหม่แบบเลือกเดียว
                     const firstOption = patient.squamousSub.split(', ')[0];
                     formReport.squamousSubSingle = firstOption || '';
                 }
             }
 
-            // นำข้อมูล Glandular คืนฟอร์ม (หมวด 200)
             formReport.glandularMain = patient.glandularMain || '';
             formReport.glandularSub = patient.glandularSub || '';
 
@@ -1073,13 +1093,11 @@ const app = createApp({
                 return; 
             }
             
-            // Validation: บังคับพิมพ์ช่องอธิบายหากเลือก 109 Other organism
             if (formReport.organismSelections.includes('109 Other organism') && !formReport.organismOtherText.trim()) {
                 if(typeof Swal !== 'undefined') Swal.fire('ข้อมูลไม่ครบ', 'กรุณาระบุคำอธิบายสำหรับ 109 Other organism', 'warning');
                 return;
             }
             
-            // Validation: หมวด 200 Squamous
             if (formReport.squamousMain && formReport.squamousMain !== 'Atypical squamous cell' && formReport.squamousMain !== 'Low grade squamous intraepithelial lesion (LSIL) encompassing' && formReport.squamousMain !== 'High grade squamous intraepithelial lesion (HSIL) encompassing') {
                  // ข้าม หากเป็นค่าว่าง
             } else if (formReport.squamousMain && !formReport.squamousSubSingle) {
@@ -1092,7 +1110,6 @@ const app = createApp({
                  return;
             }
 
-            // Validation: หมวด 200 Glandular
             if (formReport.glandularMain && formReport.glandularMain !== '281 Endocervical adenocarcinoma in situ (AIS)' && !formReport.glandularSub) {
                 if(typeof Swal !== 'undefined') Swal.fire('ข้อมูลไม่ครบ', 'กรุณาเลือกรายละเอียด Glandular cell', 'warning'); 
                  return;
@@ -1112,7 +1129,6 @@ const app = createApp({
             if (confirm.isConfirmed) {
                 isLoading.value = true;
                 try {
-                    // จัดการข้อมูล Organism Array ให้เป็น String 
                     let finalOrganism = [];
                     formReport.organismSelections.forEach(org => {
                         if (org === '109 Other organism') {
@@ -1126,7 +1142,6 @@ const app = createApp({
                         }
                     });
                     
-                    // สร้าง String สำหรับ Squamous Sub
                     let finalSqSub = '';
                     if (formReport.squamousMain) {
                         finalSqSub = formReport.squamousSubSingle;
@@ -1145,7 +1160,6 @@ const app = createApp({
                         organism: finalOrganism.join(', '),
                         nonNeo: formReport.nonNeoSelections.join(', '),
                         
-                        // ส่งข้อมูล 200 EPITHELIAL
                         squamousMain: formReport.squamousMain,
                         squamousSub: finalSqSub,
                         glandularMain: formReport.glandularMain,
@@ -1268,7 +1282,7 @@ const app = createApp({
             statusFilter, unitFilter, dashDateStart, dashDateEnd, showSettingsModal, showProfileModal, loginStep, otpInput, otpMessage,
             user, config, formLogin, stats, tatOverview, patients, filteredPatients, progressPercent, unitStats,
             canAccessReport, formReg, prefixes, searchQuery, systemConfig,
-            ui, filteredUnits, filteredDistricts, filteredContras, masterPrevTx, masterCytoTechs, masterPathos, masterUnits, masterOrganism, masterNonNeo,
+            ui, filteredUnits, filteredDistricts, filteredContras, masterPrevTx, masterCytoTechs, masterPathos, masterUnits, masterOrganism, masterNonNeo, masterCat300,
             logoRef, isLogoPlaying, toggleLogo, appVersion,
             theme, changeTheme, isLocked, lockPassword, lockError, lockScreen, unlockScreen, handleMainScroll, handleTableScroll,
             submitRegister, handleLoginStep1, handleLoginStep2, handleLogout, fetchData, openRegisterPage, openEditMode, openViewMode,
