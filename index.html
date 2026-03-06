@@ -65,10 +65,10 @@
         </div>
     </transition>
 
-    <!-- Settings Modal -->
+    <!-- Settings Modal (ปรับขนาดให้กว้างขึ้น max-w-md) -->
     <transition name="fade">
         <div v-if="showSettingsModal" @click.self="showSettingsModal=false" class="fixed inset-0 z-[60] bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
-            <div class="liquid-glass rounded-3xl w-full max-w-sm p-0 overflow-hidden animate-slide-up">
+            <div class="liquid-glass rounded-3xl w-full max-w-md p-0 overflow-hidden animate-slide-up shadow-2xl">
                 <div class="p-5 border-b theme-border flex justify-between items-center">
                     <h3 class="text-lg font-bold theme-text flex items-center gap-2"><i class="ph ph-gear-six text-xl text-indigo-500"></i> ตั้งค่าระบบ</h3>
                     <button @click="showSettingsModal=false" class="text-slate-400 hover:text-rose-500 text-2xl font-bold transition">&times;</button>
@@ -82,9 +82,9 @@
                     <div>
                         <h4 class="text-[11px] font-bold theme-text-muted uppercase tracking-widest mb-3">ธีมสี (Theme)</h4>
                         <div class="grid grid-cols-3 gap-2">
-                            <button @click="changeTheme('light')" :class="['p-2 rounded-xl flex flex-col items-center gap-1 transition', theme === 'light' ? 'bg-indigo-100 text-indigo-600 border border-indigo-200' : 'bg-slate-100 text-slate-500 border border-transparent hover:bg-slate-200']"><i class="ph ph-sun text-xl"></i><span class="text-[10px] font-bold">สว่าง</span></button>
-                            <button @click="changeTheme('eyecare')" :class="['p-2 rounded-xl flex flex-col items-center gap-1 transition', theme === 'eyecare' ? 'bg-amber-100 text-amber-700 border border-amber-200' : 'bg-slate-100 text-slate-500 border border-transparent hover:bg-amber-50']"><i class="ph ph-eye text-xl"></i><span class="text-[10px] font-bold">ถนอมสายตา</span></button>
-                            <button @click="changeTheme('dark')" :class="['p-2 rounded-xl flex flex-col items-center gap-1 transition', theme === 'dark' ? 'bg-slate-700 text-white border border-slate-600' : 'bg-slate-100 text-slate-500 border border-transparent hover:bg-slate-200']"><i class="ph ph-moon text-xl"></i><span class="text-[10px] font-bold">มืด</span></button>
+                            <button @click="changeTheme('light')" :class="['p-2 rounded-xl flex flex-col items-center gap-1 transition', theme === 'light' ? 'bg-indigo-100 text-indigo-600 border border-indigo-200 shadow-inner' : 'bg-slate-100 text-slate-500 border border-transparent hover:bg-slate-200']"><i class="ph ph-sun text-xl"></i><span class="text-[10px] font-bold">สว่าง</span></button>
+                            <button @click="changeTheme('eyecare')" :class="['p-2 rounded-xl flex flex-col items-center gap-1 transition', theme === 'eyecare' ? 'bg-amber-100 text-amber-700 border border-amber-200 shadow-inner' : 'bg-slate-100 text-slate-500 border border-transparent hover:bg-amber-50']"><i class="ph ph-eye text-xl"></i><span class="text-[10px] font-bold">ถนอมสายตา</span></button>
+                            <button @click="changeTheme('dark')" :class="['p-2 rounded-xl flex flex-col items-center gap-1 transition', theme === 'dark' ? 'bg-slate-700 text-white border border-slate-600 shadow-inner' : 'bg-slate-100 text-slate-500 border border-transparent hover:bg-slate-200']"><i class="ph ph-moon text-xl"></i><span class="text-[10px] font-bold">มืด</span></button>
                         </div>
                     </div>
                     
@@ -223,16 +223,17 @@
                 </div>
             </div>
 
-            <!-- 4. Fiscal Year Picker -->
-            <div v-show="isSidebarOpen" class="px-2 py-3 border-b theme-border shrink-0">
-                <label class="text-[14px] font-bold theme-text flex items-center justify-start gap-2 mb-1.5 px-3">
-                    <i class="ph ph-database text-[18px] text-indigo-500"></i> ข้อมูลปีงบประมาณ
+            <!-- 4. Fiscal Year Picker (ปรับปรุงให้แสดงเสมอ และอยู่ใน Layout ที่ Smooth) -->
+            <div class="p-3 border-b theme-border shrink-0 flex flex-col items-center justify-center transition-all bg-[var(--bg-sidebar)]">
+                <label v-show="isSidebarOpen" class="text-[12px] font-bold theme-text-muted w-full text-left mb-1.5 px-2 uppercase tracking-widest whitespace-nowrap overflow-hidden flex items-center gap-1.5">
+                    <i class="ph ph-database text-indigo-500 text-[14px]"></i> ข้อมูลปีงบประมาณ
                 </label>
-                <div class="relative group px-1">
-                    <select v-model="config.selectedYear" class="w-full bg-transparent hover:bg-black/5 text-[16px] rounded-2xl px-4 py-3 font-black appearance-none outline-none cursor-pointer transition-all text-left animated-pastel-text border-2 border-transparent focus:border-indigo-200">
+                <div class="relative group w-full flex justify-center px-1">
+                    <!-- Dropdown ซ่อนลูกศรเมื่อพับแถบ ปรับ Padding ให้พอดี -->
+                    <select v-model="config.selectedYear" :class="['bg-[var(--bg-input)] hover:bg-black/5 border theme-border font-black appearance-none outline-none cursor-pointer transition-all animated-pastel-text shadow-sm focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 w-full', isSidebarOpen ? 'text-left px-3 py-2 text-[15px] rounded-xl' : 'text-center px-1 py-1.5 text-[12px] rounded-lg']" :title="!isSidebarOpen ? 'เปลี่ยนปีงบประมาณ' : ''">
                         <option v-for="y in config.years" :key="y" :value="y" class="font-bold text-slate-700">{{ y }}</option>
                     </select>
-                    <i class="ph ph-caret-down absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none group-hover:text-indigo-500 transition-colors"></i>
+                    <i v-show="isSidebarOpen" class="ph ph-caret-down absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none group-hover:text-indigo-500 transition-colors"></i>
                 </div>
             </div>
 
@@ -259,15 +260,15 @@
             <div class="p-3 border-t theme-border shrink-0 flex flex-col gap-1.5">
                 <button @click="lockScreen" class="w-full flex items-center justify-center md:justify-start pl-0 md:pl-2 gap-3 theme-text-muted hover:bg-black/5 hover:text-indigo-500 py-3 rounded-2xl transition font-bold text-sm group" :title="!isSidebarOpen ? 'ล็อกหน้าจอ' : ''">
                     <i class="ph ph-lock text-xl group-hover:scale-110 transition-transform"></i>
-                    <span v-show="isSidebarOpen">ล็อกหน้าจอ</span>
+                    <span v-show="isSidebarOpen" class="whitespace-nowrap overflow-hidden">ล็อกหน้าจอ</span>
                 </button>
                 <button @click="showSettingsModal=true" class="w-full flex items-center justify-center md:justify-start pl-0 md:pl-2 gap-3 theme-text-muted hover:bg-black/5 hover:text-orange-500 py-3 rounded-2xl transition font-bold text-sm group" :title="!isSidebarOpen ? 'ตั้งค่า' : ''">
                     <i class="ph ph-gear-six text-xl group-hover:rotate-90 transition-transform duration-500"></i>
-                    <span v-show="isSidebarOpen">ตั้งค่าระบบ</span>
+                    <span v-show="isSidebarOpen" class="whitespace-nowrap overflow-hidden">ตั้งค่าระบบ</span>
                 </button>
                 <button @click="handleLogout" class="w-full flex items-center justify-center md:justify-start pl-0 md:pl-2 gap-3 text-rose-500 hover:bg-rose-500/10 py-3 rounded-2xl transition font-bold text-sm group" :title="!isSidebarOpen ? 'ออกจากระบบ' : ''">
                     <i class="ph ph-sign-out text-xl group-hover:-translate-x-1 transition-transform"></i>
-                    <span v-show="isSidebarOpen">ออกจากระบบ</span>
+                    <span v-show="isSidebarOpen" class="whitespace-nowrap overflow-hidden">ออกจากระบบ</span>
                 </button>
             </div>
         </aside>
@@ -403,7 +404,6 @@
                             <h2 class="text-xl md:text-2xl font-black theme-text">รายการผู้รับบริการ</h2>
                         </div>
                         <div class="flex flex-wrap items-center gap-3">
-                            <!-- เพิ่ม Dropdown แบบ Badge ให้เลือกปีงบประมาณที่ด้านบน -->
                             <div class="relative group inline-flex items-center bg-black/5 px-3 py-1.5 rounded-lg border theme-border hover:bg-black/10 transition-all shadow-sm">
                                 <span class="theme-text-muted text-[13px] md:text-sm font-bold mr-1">ปีงบประมาณ</span>
                                 <select v-model="config.selectedYear" class="bg-transparent appearance-none outline-none cursor-pointer animated-pastel-text text-[15px] font-black pr-4 relative z-10 w-[60px]">
@@ -444,7 +444,6 @@
                             </div>
                         </div>
 
-                        <!-- เพิ่มการกำหนด Width ให้ตารางคงที่ -->
                         <div class="overflow-x-auto overflow-y-auto flex-1 relative bg-black/5 custom-scroll">
                             <table class="w-full text-left border-collapse table-fixed min-w-[900px]">
                                 <thead class="text-[11px] uppercase border-b theme-border font-bold sticky top-0 z-20 shadow-sm"
@@ -542,21 +541,27 @@
                             <div class="xl:col-span-5 p-4 md:p-5 bg-orange-500/5 border-t xl:border-t-0 theme-border">
                                 <h3 class="text-[14px] font-black text-orange-500 uppercase tracking-widest mb-4 flex items-center gap-2"><i class="ph ph-hospital text-lg"></i> ข้อมูลหน่วยงาน</h3>
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3.5">
-                                    <div class="md:col-span-2 relative unit-dropdown">
+                                    <!-- Changed from Autocomplete to Standard Select -->
+                                    <div class="md:col-span-2 relative">
                                         <label class="label-sm">หน่วยเก็บ <span class="text-red-500">*</span></label>
-                                        <input type="text" v-model="ui.searchUnit" @focus="!viewMode && (ui.showUnitList = true)" class="input-std font-bold focus:ring-2 focus:ring-orange-400" placeholder="พิมพ์เพื่อค้นหา..." required :disabled="viewMode">
-                                        <i v-if="!viewMode" class="ph ph-caret-down absolute right-3 top-[34px] text-slate-400 pointer-events-none"></i>
-                                        <ul v-show="ui.showUnitList && filteredUnits.length > 0" class="absolute z-10 w-full bg-[var(--bg-input)] border theme-border shadow-xl max-h-48 overflow-y-auto rounded-xl mt-1 backdrop-blur-md">
-                                            <li v-for="(u, idx) in filteredUnits" :key="'ul-'+idx" @click.stop="selectUnit(u)" class="px-4 py-2 hover:bg-black/5 cursor-pointer text-[14px] font-medium theme-text border-b theme-border last:border-0">{{ u }}</li>
-                                        </ul>
+                                        <div class="relative">
+                                            <select v-model="formReg.unit" class="input-std font-bold focus:ring-2 focus:ring-orange-400 appearance-none" required :disabled="viewMode">
+                                                <option value="" disabled selected>เลือกหน่วยงาน...</option>
+                                                <option v-for="(u, idx) in masterUnits" :key="'u-'+idx" :value="u">{{ u }}</option>
+                                            </select>
+                                            <i v-if="!viewMode" class="ph ph-caret-down absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></i>
+                                        </div>
                                     </div>
-                                    <div class="relative dist-dropdown">
+                                    <!-- Changed from Autocomplete to Standard Select -->
+                                    <div class="relative">
                                         <label class="label-sm">อำเภอ</label>
-                                        <input type="text" v-model="ui.searchDist" @focus="!viewMode && (ui.showDistList = true)" class="input-std font-medium focus:ring-2 focus:ring-orange-400" placeholder="พิมพ์ค้นหา..." :disabled="viewMode">
-                                        <i v-if="!viewMode" class="ph ph-caret-down absolute right-3 top-[34px] text-slate-400 pointer-events-none"></i>
-                                        <ul v-show="ui.showDistList && filteredDistricts.length > 0" class="absolute z-10 w-full bg-[var(--bg-input)] border theme-border shadow-xl max-h-48 overflow-y-auto rounded-xl mt-1 backdrop-blur-md">
-                                            <li v-for="(d, idx) in filteredDistricts" :key="'dl-'+idx" @click.stop="selectDist(d)" class="px-4 py-2 hover:bg-black/5 cursor-pointer text-[14px] font-medium theme-text border-b theme-border last:border-0">{{ d }}</li>
-                                        </ul>
+                                        <div class="relative">
+                                            <select v-model="formReg.district" class="input-std font-medium focus:ring-2 focus:ring-orange-400 appearance-none" :disabled="viewMode">
+                                                <option value="" disabled selected>เลือกอำเภอ...</option>
+                                                <option v-for="(d, idx) in masterDistricts" :key="'d-'+idx" :value="d">{{ d }}</option>
+                                            </select>
+                                            <i v-if="!viewMode" class="ph ph-caret-down absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></i>
+                                        </div>
                                     </div>
                                     <div><label class="label-sm">รหัส รพ.</label><input v-model="formReg.hcode" type="text" maxlength="10" @input="formReg.hcode = formReg.hcode.replace(/\D/g, '')" class="input-std font-medium focus:ring-2 focus:ring-orange-400" :disabled="viewMode"></div>
                                     
@@ -573,19 +578,22 @@
                                 <div class="col-span-1"><label class="label-sm">Last</label><input v-model="formReg.last" type="text" maxlength="3" @input="formReg.last = formReg.last.replace(/\D/g, '')" class="input-std font-bold focus:ring-2 focus:ring-emerald-400 text-center" :disabled="viewMode"></div>
                                 <div class="col-span-2">
                                     <label class="label-sm">LMP</label>
-                                    <select v-model="ui.lmpType" class="input-std font-medium focus:ring-2 focus:ring-emerald-400" :class="{'mb-1.5': ui.lmpType === 'ระบุวันที่'}" :disabled="viewMode">
+                                    <select v-model="ui.lmpType" class="input-std font-medium focus:ring-2 focus:ring-emerald-400 appearance-none" :class="{'mb-1.5': ui.lmpType === 'ระบุวันที่'}" :disabled="viewMode">
                                         <option value="ระบุวันที่">ระบุวันที่</option><option value="หมดประจำเดือน">หมดประจำเดือน</option><option value="จำไม่ได้">จำไม่ได้</option><option value="หลังคลอด">หลังคลอด</option>
                                     </select>
                                     <input v-if="ui.lmpType === 'ระบุวันที่'" v-model="ui.lmpDate" type="date" class="input-std font-medium focus:ring-2 focus:ring-emerald-400 animate-slide-up" :disabled="viewMode">
                                 </div>
                                 
-                                <div class="col-span-2 xl:col-span-2 relative contra-dropdown">
+                                <!-- Changed from Autocomplete to Standard Select with Optional Input -->
+                                <div class="col-span-2 xl:col-span-2 relative">
                                     <label class="label-sm">การคุมกำเนิด</label>
-                                    <input type="text" v-model="ui.searchContra" @focus="!viewMode && (ui.showContraList = true)" class="input-std font-medium focus:ring-2 focus:ring-emerald-400" :class="{'mb-1.5': ui.searchContra === 'อื่นๆ (ระบุ)'}" placeholder="พิมพ์เพื่อค้นหา..." :disabled="viewMode">
-                                    <i v-if="!viewMode" class="ph ph-caret-down absolute right-3 top-[34px] text-slate-400 pointer-events-none"></i>
-                                    <ul v-show="ui.showContraList && filteredContras.length > 0" class="absolute z-10 w-full bg-[var(--bg-input)] border theme-border shadow-xl max-h-48 overflow-y-auto rounded-xl mt-1 backdrop-blur-md">
-                                        <li v-for="(c, idx) in filteredContras" :key="'cl-'+idx" @click.stop="selectContra(c)" class="px-3 py-2 hover:bg-black/5 cursor-pointer text-[14px] font-medium theme-text border-b theme-border">{{ c }}</li>
-                                    </ul>
+                                    <div class="relative">
+                                        <select v-model="ui.searchContra" class="input-std font-medium focus:ring-2 focus:ring-emerald-400 appearance-none" :class="{'mb-1.5': ui.searchContra === 'อื่นๆ (ระบุ)'}" :disabled="viewMode">
+                                            <option value="" disabled selected>เลือกการคุมกำเนิด...</option>
+                                            <option v-for="(c, idx) in masterContras" :key="'c-'+idx" :value="c">{{ c }}</option>
+                                        </select>
+                                        <i v-if="!viewMode" class="ph ph-caret-down absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></i>
+                                    </div>
                                     <input v-if="ui.searchContra === 'อื่นๆ (ระบุ)'" v-model="ui.contraOtherText" type="text" class="input-std font-medium focus:ring-2 focus:ring-emerald-400 animate-slide-up" placeholder="ระบุอื่นๆ..." :disabled="viewMode">
                                 </div>
                                 
@@ -651,7 +659,6 @@
                             <h2 class="text-xl md:text-2xl font-black theme-text">รายงานผลทางเซลล์วิทยา (Cytology Report)</h2>
                         </div>
                         <div class="flex flex-wrap items-center gap-3">
-                            <!-- เพิ่ม Dropdown แบบ Badge ให้เลือกปีงบประมาณที่ด้านบน -->
                             <div class="relative group inline-flex items-center bg-black/5 px-3 py-1.5 rounded-lg border theme-border hover:bg-black/10 transition-all shadow-sm">
                                 <span class="theme-text-muted text-[13px] md:text-sm font-bold mr-1">ปีงบประมาณ</span>
                                 <select v-model="config.selectedYear" class="bg-transparent appearance-none outline-none cursor-pointer animated-pastel-text text-[15px] font-black pr-4 relative z-10 w-[60px]">
@@ -693,7 +700,6 @@
                             </div>
                         </div>
 
-                        <!-- เพิ่มการกำหนด Width ให้ตารางคงที่ -->
                         <div class="overflow-x-auto overflow-y-auto flex-1 relative bg-black/5 custom-scroll">
                             <table class="w-full text-left border-collapse table-fixed min-w-[900px]">
                                 <thead class="text-[11px] uppercase border-b theme-border font-bold sticky top-0 z-20 shadow-sm"
@@ -851,7 +857,6 @@
                                         <div class="bg-[var(--bg-input)] p-2.5 rounded-lg border theme-border shadow-sm flex flex-col md:flex-row gap-2 mt-2">
                                             <div class="flex-1">
                                                 <label class="label-sm">Additional (เพิ่มเติม)</label>
-                                                <!-- ปรับแก้ Additional ตรงนี้ให้มี Dropdown เป็นสีเทาในตอนเริ่มต้น -->
                                                 <select v-model="formReport.additional" class="input-std focus:ring-2 focus:ring-emerald-500 mt-1 transition-colors" :class="!formReport.additional ? 'text-slate-400 font-normal' : 'font-bold theme-text'" :disabled="viewMode">
                                                     <option value="" class="text-slate-400 font-normal">ระบุ...</option>
                                                     <option v-for="(opt, idx) in additionalOptions" :key="'add-'+idx" :value="opt.text" class="text-slate-700 font-bold">{{ opt.text }}</option>
@@ -1012,7 +1017,6 @@
                             <!-- 300 OTHER MALIGNANT -->
                             <div class="p-3 md:p-4 bg-rose-500/5 border-b md:border-b-0 md:border-r theme-border h-full flex flex-col justify-center">
                                 <h3 class="font-black text-rose-600 mb-2 text-[15px] border-l-[3px] border-rose-500 pl-2">300 OTHER MALIGNANT NEOPLASMS</h3>
-                                <!-- ปรับแก้ 300 OTHER ตรงนี้ให้มี Dropdown เป็นสีเทาในตอนเริ่มต้น -->
                                 <select v-model="formReport.cat300" class="input-std focus:ring-2 focus:ring-rose-500 transition-colors" :class="!formReport.cat300 ? 'text-slate-400 font-normal' : 'font-bold theme-text'" :disabled="viewMode">
                                     <option value="" class="text-slate-400 font-normal">ระบุ...</option>
                                     <option v-for="(opt, idx) in masterCat300" :key="'c300-'+idx" :value="opt" class="text-slate-700 font-bold">{{ opt }}</option>
