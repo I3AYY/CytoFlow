@@ -223,13 +223,12 @@
                 </div>
             </div>
 
-            <!-- 4. Fiscal Year Picker (ปรับปรุงให้แสดงเสมอ และอยู่ใน Layout ที่ Smooth) -->
+            <!-- 4. Fiscal Year Picker -->
             <div class="p-3 border-b theme-border shrink-0 flex flex-col items-center justify-center transition-all bg-[var(--bg-sidebar)]">
                 <label v-show="isSidebarOpen" class="text-[12px] font-bold theme-text-muted w-full text-left mb-1.5 px-2 uppercase tracking-widest whitespace-nowrap overflow-hidden flex items-center gap-1.5">
                     <i class="ph ph-database text-indigo-500 text-[14px]"></i> ข้อมูลปีงบประมาณ
                 </label>
                 <div class="relative group w-full flex justify-center px-1">
-                    <!-- Dropdown ซ่อนลูกศรเมื่อพับแถบ ปรับ Padding ให้พอดี -->
                     <select v-model="config.selectedYear" :class="['bg-[var(--bg-input)] hover:bg-black/5 border theme-border font-black appearance-none outline-none cursor-pointer transition-all animated-pastel-text shadow-sm focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 w-full', isSidebarOpen ? 'text-left px-3 py-2 text-[15px] rounded-xl' : 'text-center px-1 py-1.5 text-[12px] rounded-lg']" :title="!isSidebarOpen ? 'เปลี่ยนปีงบประมาณ' : ''">
                         <option v-for="y in config.years" :key="y" :value="y" class="font-bold text-slate-700">{{ y }}</option>
                     </select>
@@ -291,7 +290,6 @@
                             <h2 class="text-xl md:text-2xl font-black theme-text">ภาพรวมการดำเนินงาน</h2>
                         </div>
                         <div class="flex flex-wrap items-center gap-3">
-                            <!-- เพิ่ม Dropdown แบบ Badge ให้เลือกปีงบประมาณที่ด้านบน -->
                             <div class="relative group inline-flex items-center bg-black/5 px-3 py-1.5 rounded-lg border theme-border hover:bg-black/10 transition-all shadow-sm">
                                 <span class="theme-text-muted text-[13px] md:text-sm font-bold mr-1">ปีงบประมาณ</span>
                                 <select v-model="config.selectedYear" class="bg-transparent appearance-none outline-none cursor-pointer animated-pastel-text text-[15px] font-black pr-4 relative z-10 w-[60px]">
@@ -541,7 +539,6 @@
                             <div class="xl:col-span-5 p-4 md:p-5 bg-orange-500/5 border-t xl:border-t-0 theme-border">
                                 <h3 class="text-[14px] font-black text-orange-500 uppercase tracking-widest mb-4 flex items-center gap-2"><i class="ph ph-hospital text-lg"></i> ข้อมูลหน่วยงาน</h3>
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3.5">
-                                    <!-- Changed from Autocomplete to Standard Select -->
                                     <div class="md:col-span-2 relative">
                                         <label class="label-sm">หน่วยเก็บ <span class="text-red-500">*</span></label>
                                         <div class="relative">
@@ -552,7 +549,6 @@
                                             <i v-if="!viewMode" class="ph ph-caret-down absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></i>
                                         </div>
                                     </div>
-                                    <!-- Changed from Autocomplete to Standard Select -->
                                     <div class="relative">
                                         <label class="label-sm">อำเภอ</label>
                                         <div class="relative">
@@ -584,7 +580,6 @@
                                     <input v-if="ui.lmpType === 'ระบุวันที่'" v-model="ui.lmpDate" type="date" class="input-std font-medium focus:ring-2 focus:ring-emerald-400 animate-slide-up" :disabled="viewMode">
                                 </div>
                                 
-                                <!-- Changed from Autocomplete to Standard Select with Optional Input -->
                                 <div class="col-span-2 xl:col-span-2 relative">
                                     <label class="label-sm">การคุมกำเนิด</label>
                                     <div class="relative">
