@@ -1,10 +1,20 @@
-// --- CONFIGURATION ---
-const MASTER_SHEET_ID = 'XXXXX'; // โปรดระบุ ID ของคุณ
+// =====================================================================
+// CytoFlow v1.3.0 AI Edition - Multi-Database Architecture (SaaS Ready)
+// =====================================================================
+
+// --- DATABASE CONFIGURATION ---
+// นำ ID ของ Google Sheets ทั้ง 4 ไฟล์มาใส่ที่นี่
+const DB_FILES = {
+  SYSTEM: 'XXXX',    // [Sheets]: Fiscal_Year, App_Logo
+  USER: 'XXXX',      // [Sheets]: Users, Cytotechnologist, Pathologist
+  REF: 'XXXX',  // [Sheets]: SPECIMEN ADEQUACY, 200 Squamous Cell, 200 Glandular Cell, 300 OTHER, Sampling_Unit, District
+  LOG: 'XXXX'        // [Sheets]: System_Logs, Log_2569, Log_2570...
+};
 
 function doGet() {
   return HtmlService.createTemplateFromFile('index')
     .evaluate()
-    .setTitle('CytoFlow 2026 (v1.2.9 AI Edition)')
+    .setTitle('CytoFlow 2026 (v1.3.0 AI Edition)')
     .addMetaTag('viewport', 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no')
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
@@ -29,9 +39,12 @@ function formatDateTimeVal(val) {
   return String(val);
 }
 
+// Helper: ดึง Sheet ข้อมูลคนไข้ตามปีงบประมาณ
 function getDbSheet(year) {
-  const master = SpreadsheetApp.openById(MASTER_SHEET_ID);
-  const configSheet = master.getSheetByName('DB_Config');
+  const sysSS = SpreadsheetApp.openById(DB_FILES.SYSTEM);
+  const configSheet = sysSS.getSheetByName('Fiscal_Year');
+  if(!configSheet) throw new Error("ไม่พบแท็บ Fiscal_Year ในไฟล์ Master_Config");
+  
   const data = configSheet.getDataRange().getValues();
   for (let i = 1; i < data.length; i++) {
     if (String(data[i][0]) == String(year)) {
@@ -41,13 +54,13 @@ function getDbSheet(year) {
   throw new Error("ไม่พบ Config สำหรับปีงบ: " + year);
 }
 
-// --- LOGGING ---
+// --- LOGGING (แยกไฟล์เพื่อความปลอดภัยระดับ PDPA) ---
 function logSystem(action, detail, username) {
   try {
-    const ss = SpreadsheetApp.openById(MASTER_SHEET_ID);
-    let sheet = ss.getSheetByName('System_Logs');
+    const logSS = SpreadsheetApp.openById(DB_FILES.LOG);
+    let sheet = logSS.getSheetByName('System_Logs');
     if (!sheet) {
-      sheet = ss.insertSheet('System_Logs');
+      sheet = logSS.insertSheet('System_Logs');
       sheet.appendRow(['Timestamp', 'User', 'Action', 'Detail']);
     }
     sheet.appendRow([new Date(), username, action, detail]);
@@ -56,23 +69,33 @@ function logSystem(action, detail, username) {
 
 function logData(year, action, detail, username, cytoNo) {
   try {
-    const master = SpreadsheetApp.openById(MASTER_SHEET_ID);
-    const configSheet = master.getSheetByName('DB_Config');
-    const data = configSheet.getDataRange().getValues();
-    let fileId = null;
-    for (let i = 1; i < data.length; i++) {
-      if (String(data[i][0]) == String(year)) { fileId = data[i][1]; break; }
+    // 1. เปิดไฟล์ Log_Config (ส่วนกลาง)
+    const logSS = SpreadsheetApp.openById(DB_FILES.LOG);
+    
+    // 2. กำหนดชื่อหน้า เช่น "Log_2569", "Log_2570"
+    const sheetName = 'Log_' + year;
+    let sheet = logSS.getSheetByName(sheetName);
+    
+    // 3. ระบบ Auto-Create (ถ้ายังไม่มีหน้าของปีงบนั้น ให้สร้างใหม่และใส่ Header ทันที)
+    if (!sheet) {
+      sheet = logSS.insertSheet(sheetName);
+      
+      // สร้าง Header ตาราง
+      sheet.appendRow(['Timestamp', 'User', 'Action', 'CytoNo', 'Detail']);
+      
+      // [Optional] ตกแต่ง Header ให้ตัวหนาและมีสีพื้นหลังเล็กน้อย เพื่อความสวยงาม
+      sheet.getRange("A1:E1").setFontWeight("bold").setBackground("#e0e7ff");
+      
+      // ตรึงแถวบนสุดไว้
+      sheet.setFrozenRows(1);
     }
-    if(fileId) {
-      const ss = SpreadsheetApp.openById(fileId);
-      let sheet = ss.getSheetByName('Data_Logs');
-      if (!sheet) {
-        sheet = ss.insertSheet('Data_Logs');
-        sheet.appendRow(['Timestamp', 'User', 'Action', 'CytoNo', 'Detail']);
-      }
-      sheet.appendRow([new Date(), username, action, cytoNo, detail]);
-    }
-  } catch(e) { console.log("Log Data Error: " + e); }
+    
+    // 4. บันทึกข้อมูลลงไป
+    sheet.appendRow([new Date(), username, action, cytoNo, detail]);
+    
+  } catch(e) { 
+    console.log("Log Data Error: " + e); 
+  }
 }
 
 function getCurrentFiscalYear() {
@@ -82,22 +105,24 @@ function getCurrentFiscalYear() {
   return year;
 }
 
-// --- API: GET MASTER DATA ---
+// --- API: GET MASTER DATA (ดึงจากหลายไฟล์) ---
 function apiGetMasterData() {
   try {
-    const ss = SpreadsheetApp.openById(MASTER_SHEET_ID);
-    const unitsSheet = ss.getSheetByName('Sampling_Unit');
-    const districtSheet = ss.getSheetByName('District');
-    const adequacySheet = ss.getSheetByName('SPECIMEN ADEQUACY');
-    const cytoTechSheet = ss.getSheetByName('Cytotechnologist');
-    const pathoSheet = ss.getSheetByName('Pathologist');
+    // แยกเปิด 2 ไฟล์: Reference Data และ User
+    const refSS = SpreadsheetApp.openById(DB_FILES.REF);
+    const userSS = SpreadsheetApp.openById(DB_FILES.USER);
     
-    // ดึงข้อมูลหมวด 200
-    const sqSheet = ss.getSheetByName('200 Squamous Cell');
-    const glSheet = ss.getSheetByName('200 Glandular Cell');
+    // ดึงจาก Reference_Data_Config
+    const unitsSheet = refSS.getSheetByName('Sampling_Unit');
+    const districtSheet = refSS.getSheetByName('District');
+    const adequacySheet = refSS.getSheetByName('SPECIMEN ADEQUACY');
+    const sqSheet = refSS.getSheetByName('200 Squamous Cell');
+    const glSheet = refSS.getSheetByName('200 Glandular Cell');
+    const cat300Sheet = refSS.getSheetByName('300 OTHER');
     
-    // NEW: ดึงข้อมูลหมวด 300
-    const cat300Sheet = ss.getSheetByName('300 OTHER');
+    // ดึงจาก User_Config
+    const cytoTechSheet = userSS.getSheetByName('Cytotechnologist');
+    const pathoSheet = userSS.getSheetByName('Pathologist');
     
     let units = []; let districts = []; let adequacyMaster = [];
     let cytoTechs = []; let pathos = [];
@@ -115,16 +140,6 @@ function apiGetMasterData() {
       const adData = adequacySheet.getRange(2, 1, Math.max(1, adequacySheet.getLastRow() - 1), 2).getValues();
       adequacyMaster = adData.map(r => ({ group: String(r[0]).trim(), text: String(r[1]).trim() })).filter(x => x.text);
     }
-    if (cytoTechSheet) {
-      const ctData = cytoTechSheet.getRange(2, 1, Math.max(1, cytoTechSheet.getLastRow() - 1), 2).getValues();
-      cytoTechs = ctData.map(r => (String(r[0]).trim() + " " + String(r[1]).trim()).trim()).filter(Boolean);
-    }
-    if (pathoSheet) {
-      const ptData = pathoSheet.getRange(2, 1, Math.max(1, pathoSheet.getLastRow() - 1), 2).getValues();
-      pathos = ptData.map(r => (String(r[0]).trim() + " " + String(r[1]).trim()).trim()).filter(Boolean);
-    }
-    
-    // Process new 200 sheets
     if (sqSheet) {
       const sqData = sqSheet.getRange(2, 1, Math.max(1, sqSheet.getLastRow() - 1), 3).getValues();
       masterSquamous = sqData.map(r => ({ main: String(r[0]).trim(), detail1: String(r[1]).trim(), detail2: String(r[2]).trim() })).filter(x => x.main || x.detail1);
@@ -133,11 +148,19 @@ function apiGetMasterData() {
       const glData = glSheet.getRange(2, 1, Math.max(1, glSheet.getLastRow() - 1), 2).getValues();
       masterGlandular = glData.map(r => ({ main: String(r[0]).trim(), detail1: String(r[1]).trim() })).filter(x => x.main || x.detail1);
     }
-    
-    // Process 300 Sheet
     if (cat300Sheet) {
       const c300Data = cat300Sheet.getRange(2, 1, Math.max(1, cat300Sheet.getLastRow() - 1)).getValues();
       masterCat300 = c300Data.map(r => String(r[0]).trim()).filter(Boolean);
+    }
+    
+    // Users Signatures
+    if (cytoTechSheet) {
+      const ctData = cytoTechSheet.getRange(2, 1, Math.max(1, cytoTechSheet.getLastRow() - 1), 2).getValues();
+      cytoTechs = ctData.map(r => (String(r[0]).trim() + " " + String(r[1]).trim()).trim()).filter(Boolean);
+    }
+    if (pathoSheet) {
+      const ptData = pathoSheet.getRange(2, 1, Math.max(1, pathoSheet.getLastRow() - 1), 2).getValues();
+      pathos = ptData.map(r => (String(r[0]).trim() + " " + String(r[1]).trim()).trim()).filter(Boolean);
     }
     
     return { 
@@ -174,18 +197,24 @@ function apiGetNextCytoNo(year) {
 // --- API: LOGIN ---
 function apiLoginStep1(username, password) {
   try {
-    const sheet = SpreadsheetApp.openById(MASTER_SHEET_ID).getSheetByName('Users');
+    const userSS = SpreadsheetApp.openById(DB_FILES.USER);
+    const sheet = userSS.getSheetByName('Users');
+    if(!sheet) return { status: 'error', message: 'ไม่พบฐานข้อมูล Users' };
+    
     const data = sheet.getDataRange().getValues();
     let logoUrl = "https://drive.google.com/thumbnail?id=142CkRafzFxGXtCS5q5D0Iqct7rKr4HSA&sz=w200";
+    
     try {
-      const logoSheet = SpreadsheetApp.openById(MASTER_SHEET_ID).getSheetByName('DB_Logo');
+      const sysSS = SpreadsheetApp.openById(DB_FILES.SYSTEM);
+      const logoSheet = sysSS.getSheetByName('App_Logo');
       if (logoSheet && logoSheet.getLastRow() > 1) logoUrl = logoSheet.getRange(2, 2).getValue();
-    } catch(e) {}
+    } catch(e) { console.log("Logo fetch error: " + e); }
 
     for (let i = 1; i < data.length; i++) {
       if (String(data[i][0]) == String(username) && String(data[i][1]) == String(password)) {
         const email = data[i][5];
         if (!email || email === "") return { status: 'error', message: 'Account นี้ยังไม่ระบุ Email ในระบบ' };
+        
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
         CacheService.getScriptCache().put("OTP_" + username, otp, 300);
 
@@ -193,8 +222,8 @@ function apiLoginStep1(username, password) {
           MailApp.sendEmail({ 
             to: email, 
             subject: "รหัส OTP สำหรับเข้าสู่ระบบ CytoFlow", 
-            htmlBody: `<h2>รหัส OTP ของคุณคือ: <span style="color:blue; font-size:24px;">${otp}</span></h2>`,
-            name: "CytoFlow"
+            htmlBody: `<h2>รหัส OTP ของคุณคือ: <span style="color:blue; font-size:24px;">${otp}</span></h2><br><p>รหัสจะหมดอายุภายใน 5 นาที หากท่านไม่ได้เป็นคนเข้าสู่ระบบ โปรดแจ้ง Admin ทันที (PDPA Alert)</p>`,
+            name: "CytoFlow Security"
           }); 
         } 
         catch (mailErr) { return { status: 'error', message: 'ส่งอีเมล OTP ไม่สำเร็จ: ' + mailErr.message }; }
@@ -213,7 +242,9 @@ function apiVerifyOtp(username, inputOtp) {
     const storedOtp = cache.get("OTP_" + username);
     if (storedOtp && storedOtp === inputOtp) {
       cache.remove("OTP_" + username);
-      const sheet = SpreadsheetApp.openById(MASTER_SHEET_ID).getSheetByName('Users');
+      
+      const userSS = SpreadsheetApp.openById(DB_FILES.USER);
+      const sheet = userSS.getSheetByName('Users');
       const data = sheet.getDataRange().getValues();
       let userData = null;
       for (let i = 1; i < data.length; i++) {
@@ -222,8 +253,11 @@ function apiVerifyOtp(username, inputOtp) {
           break;
         }
       }
-      const configSheet = SpreadsheetApp.openById(MASTER_SHEET_ID).getSheetByName('DB_Config');
+      
+      const sysSS = SpreadsheetApp.openById(DB_FILES.SYSTEM);
+      const configSheet = sysSS.getSheetByName('Fiscal_Year');
       const years = configSheet.getDataRange().getValues().slice(1).map(r => String(r[0]));
+      
       logSystem("Login", "Success with OTP", username);
       return { status: 'success', user: userData, years: years, currentFiscalYear: getCurrentFiscalYear() };
     } else { return { status: 'error', message: 'รหัส OTP ไม่ถูกต้อง หรือหมดอายุ' }; }
@@ -232,7 +266,8 @@ function apiVerifyOtp(username, inputOtp) {
 
 function apiVerifyPassword(username, password) {
   try {
-    const sheet = SpreadsheetApp.openById(MASTER_SHEET_ID).getSheetByName('Users');
+    const userSS = SpreadsheetApp.openById(DB_FILES.USER);
+    const sheet = userSS.getSheetByName('Users');
     const data = sheet.getDataRange().getValues();
     for (let i = 1; i < data.length; i++) {
       if (String(data[i][0]) == String(username) && String(data[i][1]) == String(password)) {
@@ -253,10 +288,9 @@ function apiGetDashboardData(year) {
     let patients = [];
 
     if (lastRow >= 2) {
-      // ดึงข้อมูล 42 คอลัมน์ (Index 0 ถึง 41)
       const data = sheet.getRange(2, 1, lastRow - 1, 42).getValues();
       data.forEach((r, index) => {
-        const status = r[41] ? String(r[41]) : "Pending"; // AP = 41
+        const status = r[41] ? String(r[41]) : "Pending";
         
         stats.total++;
         if (status === "Reported") stats.reported++;
@@ -268,25 +302,17 @@ function apiGetDashboardData(year) {
           unit: r[10] ? String(r[10]) : "ไม่ระบุ", district: r[11], hcode: r[12], coordinator: r[13], phone: r[14],
           para: r[15], last: r[16], lmp: formatDateVal(r[17]), contraception: r[18], prevTx: r[19],
           clinFind: r[20], clinDx: r[21], lastPap: r[22], method: r[23], registerName: r[24],
-          
           regTimestamp: formatDateTimeVal(r[25]),
-          
           adequacy: r[26], adequacyDetail: r[27], additional: r[28], 
           organism: r[29] ? String(r[29]) : "",
           nonNeo: r[30] ? String(r[30]) : "",
-          
-          // ดึงข้อมูล 200 EPITHELIAL (Col AF - AI)
           squamousMain: r[31] ? String(r[31]) : "",
           squamousSub: r[32] ? String(r[32]) : "",
           glandularMain: r[33] ? String(r[33]) : "",
           glandularSub: r[34] ? String(r[34]) : "",
-          
-          // เลื่อนข้อมูล 300, Comment, Signatures (Col AJ - AP)
           cat300: r[35], comment: r[36], 
-          
           cytoName: r[37], cytoDateTime: String(r[38]), 
           pathoName: r[39], pathoDateTime: String(r[40]), 
-          
           status: status 
         });
       });
@@ -316,12 +342,9 @@ function apiRegisterSample(form, year, username) {
       form.para, form.last, form.lmp, form.contraception, form.prevTx, form.clinFind, form.clinDx,
       form.lastPap, form.method, form.registerName
     ]; 
-    
-    record.push(new Date()); // Col Z: Timestamp (Index 25)
-    
-    // เติมช่องว่างสำหรับข้อมูลรายงานผล AA ถึง AO (15 คอลัมน์)
+    record.push(new Date()); 
     for(let i = 0; i < 15; i++) { record.push(""); }
-    record.push("Pending"); // Col AP (Index 41)
+    record.push("Pending");
 
     sheet.appendRow(record);
     logData(year, "Register", "Created new sample", username, cytoNo);
@@ -357,30 +380,25 @@ function apiSubmitReport(form, year, username) {
     const sheet = getDbSheet(year);
     const row = parseInt(form.rowId);
     
-    sheet.getRange(row, 27).setValue(form.adequacy);       // Col AA
-    sheet.getRange(row, 28).setValue(form.adequacyDetail); // Col AB
-    sheet.getRange(row, 29).setValue(form.additional);     // Col AC
+    sheet.getRange(row, 27).setValue(form.adequacy);       
+    sheet.getRange(row, 28).setValue(form.adequacyDetail); 
+    sheet.getRange(row, 29).setValue(form.additional);     
+    sheet.getRange(row, 30).setValue(form.organism);       
+    sheet.getRange(row, 31).setValue(form.nonNeo);         
     
-    sheet.getRange(row, 30).setValue(form.organism);       // Col AD
-    sheet.getRange(row, 31).setValue(form.nonNeo);         // Col AE
+    sheet.getRange(row, 32).setValue(form.squamousMain);   
+    sheet.getRange(row, 33).setValue(form.squamousSub);    
+    sheet.getRange(row, 34).setValue(form.glandularMain);  
+    sheet.getRange(row, 35).setValue(form.glandularSub);   
     
-    // บันทึกข้อมูลหมวด 200 EPITHELIAL
-    sheet.getRange(row, 32).setValue(form.squamousMain);   // Col AF
-    sheet.getRange(row, 33).setValue(form.squamousSub);    // Col AG
-    sheet.getRange(row, 34).setValue(form.glandularMain);  // Col AH
-    sheet.getRange(row, 35).setValue(form.glandularSub);   // Col AI
+    sheet.getRange(row, 36).setValue(form.cat300);         
+    sheet.getRange(row, 37).setValue(form.comment);        
+    sheet.getRange(row, 38).setValue(form.cytoName);       
+    sheet.getRange(row, 39).setValue(form.cytoDateTime ? "'" + form.cytoDateTime : "");   
+    sheet.getRange(row, 40).setValue(form.pathoName);      
+    sheet.getRange(row, 41).setValue(form.pathoDateTime ? "'" + form.pathoDateTime : "");  
     
-    // เลื่อนข้อมูลส่วนที่เหลือ
-    sheet.getRange(row, 36).setValue(form.cat300);         // Col AJ
-    sheet.getRange(row, 37).setValue(form.comment);        // Col AK
-    
-    sheet.getRange(row, 38).setValue(form.cytoName);       // Col AL
-    sheet.getRange(row, 39).setValue(form.cytoDateTime ? "'" + form.cytoDateTime : "");   // Col AM
-    
-    sheet.getRange(row, 40).setValue(form.pathoName);      // Col AN
-    sheet.getRange(row, 41).setValue(form.pathoDateTime ? "'" + form.pathoDateTime : "");  // Col AO
-    
-    sheet.getRange(row, 42).setValue("Reported");          // Col AP
+    sheet.getRange(row, 42).setValue("Reported");          
 
     const cytoNo = sheet.getRange(row, 1).getValue();
     
@@ -395,23 +413,29 @@ function apiSubmitReport(form, year, username) {
 // --- API: PROFILE IMAGE & LOGO ---
 function apiSaveProfileImage(username, base64Data) {
   try {
-    const ss = SpreadsheetApp.openById(MASTER_SHEET_ID); const sheet = ss.getSheetByName('Users'); const data = sheet.getDataRange().getValues();
+    const userSS = SpreadsheetApp.openById(DB_FILES.USER); 
+    const sheet = userSS.getSheetByName('Users'); 
+    const data = sheet.getDataRange().getValues();
     let rowIndex = -1; let oldFileUrl = "";
     for (let i = 1; i < data.length; i++) { if (String(data[i][0]) === String(username)) { rowIndex = i + 1; oldFileUrl = data[i][6]; break; } }
     if (rowIndex === -1) return { status: 'error', message: 'User not found' };
     if (oldFileUrl && oldFileUrl.includes("drive.google.com")) { try { const idMatch = oldFileUrl.match(/id=([^&]+)/); if (idMatch && idMatch[1]) DriveApp.getFileById(idMatch[1]).setTrashed(true); } catch (e) {} }
+    
     const folderName = "CytoFlow_Profiles"; const folders = DriveApp.getFoldersByName(folderName);
     let folder = folders.hasNext() ? folders.next() : DriveApp.createFolder(folderName);
     const contentType = base64Data.substring(5, base64Data.indexOf(';')); const bytes = Utilities.base64Decode(base64Data.substr(base64Data.indexOf('base64,')+7));
     const blob = Utilities.newBlob(bytes, contentType, `profile_${username}_${Date.now()}.jpg`); const file = folder.createFile(blob); file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
     const fileUrl = `https://drive.google.com/thumbnail?id=${file.getId()}&sz=s400`; sheet.getRange(rowIndex, 7).setValue(fileUrl);
+    
     logSystem("Change Profile Pic", "Updated profile image", username); return { status: 'success', url: fileUrl };
   } catch (e) { return { status: 'error', message: e.toString() }; }
 }
 
 function apiChangePassword(username, newPassword) {
   try {
-    const ss = SpreadsheetApp.openById(MASTER_SHEET_ID); const sheet = ss.getSheetByName('Users'); const data = sheet.getDataRange().getValues();
+    const userSS = SpreadsheetApp.openById(DB_FILES.USER); 
+    const sheet = userSS.getSheetByName('Users'); 
+    const data = sheet.getDataRange().getValues();
     for (let i = 1; i < data.length; i++) { if (String(data[i][0]) === String(username)) { sheet.getRange(i + 1, 2).setValue(newPassword); logSystem("Change Password", "Updated password", username); return { status: 'success' }; } }
     return { status: 'error', message: 'User not found' };
   } catch (e) { return { status: 'error', message: e.toString() }; }
@@ -419,14 +443,17 @@ function apiChangePassword(username, newPassword) {
 
 function apiSaveSystemLogo(base64Data, username) {
   try {
-    const ss = SpreadsheetApp.openById(MASTER_SHEET_ID); let sheet = ss.getSheetByName('DB_Logo');
-    if (!sheet) { sheet = ss.insertSheet('DB_Logo'); sheet.appendRow(['Name', 'Url']); }
+    const sysSS = SpreadsheetApp.openById(DB_FILES.SYSTEM); 
+    let sheet = sysSS.getSheetByName('App_Logo');
+    if (!sheet) { sheet = sysSS.insertSheet('App_Logo'); sheet.appendRow(['Name', 'Url']); }
+    
     const folderName = "CytoFlow_Logo"; const folders = DriveApp.getFoldersByName(folderName);
     let folder = folders.hasNext() ? folders.next() : DriveApp.createFolder(folderName);
     const contentType = base64Data.substring(5, base64Data.indexOf(';')); let ext = "png"; if (contentType.includes("gif")) ext = "gif"; else if (contentType.includes("jpeg")) ext = "jpg";
     const bytes = Utilities.base64Decode(base64Data.substr(base64Data.indexOf('base64,')+7)); const blob = Utilities.newBlob(bytes, contentType, `app_logo_${Date.now()}.${ext}`);
     const file = folder.createFile(blob); file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
     const fileUrl = `https://drive.google.com/thumbnail?id=${file.getId()}&sz=s1000`;
+    
     if (sheet.getLastRow() < 2) sheet.appendRow(['MainLogo', fileUrl]); else sheet.getRange(2, 2).setValue(fileUrl);
     logSystem("Change Logo", "Updated system logo", username); return { status: 'success', url: fileUrl };
   } catch (e) { return { status: 'error', message: e.toString() }; }
