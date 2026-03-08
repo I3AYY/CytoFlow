@@ -1,11 +1,11 @@
 // =====================================================================
-// CytoFlow v1.3.0 AI Edition - Multi-Database Architecture (SaaS Ready)
+// CytoFlow v1.3.1 AI Edition - Multi-Database Architecture (SaaS Ready)
 // =====================================================================
 
 // --- DATABASE CONFIGURATION ---
 // นำ ID ของ Google Sheets ทั้ง 4 ไฟล์มาใส่ที่นี่
 const DB_FILES = {
-  SYSTEM: 'XXXX',    // [Sheets]: Fiscal_Year, App_Logo
+  SYSTEM: 'XXXX',    // [Sheets]: Year, App_Logo
   USER: 'XXXX',      // [Sheets]: Users, Cytotechnologist, Pathologist
   REF: 'XXXX',  // [Sheets]: SPECIMEN ADEQUACY, 200 Squamous Cell, 200 Glandular Cell, 300 OTHER, Sampling_Unit, District
   LOG: 'XXXX'        // [Sheets]: System_Logs, Log_2569, Log_2570...
@@ -14,7 +14,7 @@ const DB_FILES = {
 function doGet() {
   return HtmlService.createTemplateFromFile('index')
     .evaluate()
-    .setTitle('CytoFlow 2026 (v1.3.0 AI Edition)')
+    .setTitle('CytoFlow 2026 (v1.3.1 AI Edition)')
     .addMetaTag('viewport', 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no')
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
@@ -39,11 +39,11 @@ function formatDateTimeVal(val) {
   return String(val);
 }
 
-// Helper: ดึง Sheet ข้อมูลคนไข้ตามปีงบประมาณ
+// Helper: ดึง Sheet ข้อมูลคนไข้ตามปี
 function getDbSheet(year) {
   const sysSS = SpreadsheetApp.openById(DB_FILES.SYSTEM);
-  const configSheet = sysSS.getSheetByName('Fiscal_Year');
-  if(!configSheet) throw new Error("ไม่พบแท็บ Fiscal_Year ในไฟล์ Master_Config");
+  const configSheet = sysSS.getSheetByName('Year');
+  if(!configSheet) throw new Error("ไม่พบแท็บ Year ในไฟล์ Master_Config");
   
   const data = configSheet.getDataRange().getValues();
   for (let i = 1; i < data.length; i++) {
@@ -51,7 +51,7 @@ function getDbSheet(year) {
       return SpreadsheetApp.openById(data[i][1]).getSheetByName('Data');
     }
   }
-  throw new Error("ไม่พบ Config สำหรับปีงบ: " + year);
+  throw new Error("ไม่พบ Config สำหรับปี: " + year);
 }
 
 // --- LOGGING (แยกไฟล์เพื่อความปลอดภัยระดับ PDPA) ---
@@ -69,50 +69,33 @@ function logSystem(action, detail, username) {
 
 function logData(year, action, detail, username, cytoNo) {
   try {
-    // 1. เปิดไฟล์ Log_Config (ส่วนกลาง)
     const logSS = SpreadsheetApp.openById(DB_FILES.LOG);
-    
-    // 2. กำหนดชื่อหน้า เช่น "Log_2569", "Log_2570"
     const sheetName = 'Log_' + year;
     let sheet = logSS.getSheetByName(sheetName);
     
-    // 3. ระบบ Auto-Create (ถ้ายังไม่มีหน้าของปีงบนั้น ให้สร้างใหม่และใส่ Header ทันที)
     if (!sheet) {
       sheet = logSS.insertSheet(sheetName);
-      
-      // สร้าง Header ตาราง
       sheet.appendRow(['Timestamp', 'User', 'Action', 'CytoNo', 'Detail']);
-      
-      // [Optional] ตกแต่ง Header ให้ตัวหนาและมีสีพื้นหลังเล็กน้อย เพื่อความสวยงาม
       sheet.getRange("A1:E1").setFontWeight("bold").setBackground("#e0e7ff");
-      
-      // ตรึงแถวบนสุดไว้
       sheet.setFrozenRows(1);
     }
-    
-    // 4. บันทึกข้อมูลลงไป
     sheet.appendRow([new Date(), username, action, cytoNo, detail]);
-    
   } catch(e) { 
     console.log("Log Data Error: " + e); 
   }
 }
 
-function getCurrentFiscalYear() {
+function getCurrentYear() {
   const today = new Date();
-  let year = today.getFullYear() + 543;
-  if (today.getMonth() + 1 >= 10) year++;
-  return year;
+  return today.getFullYear() + 543; // ปี พ.ศ. ปัจจุบัน
 }
 
 // --- API: GET MASTER DATA (ดึงจากหลายไฟล์) ---
 function apiGetMasterData() {
   try {
-    // แยกเปิด 2 ไฟล์: Reference Data และ User
     const refSS = SpreadsheetApp.openById(DB_FILES.REF);
     const userSS = SpreadsheetApp.openById(DB_FILES.USER);
     
-    // ดึงจาก Reference_Data_Config
     const unitsSheet = refSS.getSheetByName('Sampling_Unit');
     const districtSheet = refSS.getSheetByName('District');
     const adequacySheet = refSS.getSheetByName('SPECIMEN ADEQUACY');
@@ -120,7 +103,6 @@ function apiGetMasterData() {
     const glSheet = refSS.getSheetByName('200 Glandular Cell');
     const cat300Sheet = refSS.getSheetByName('300 OTHER');
     
-    // ดึงจาก User_Config
     const cytoTechSheet = userSS.getSheetByName('Cytotechnologist');
     const pathoSheet = userSS.getSheetByName('Pathologist');
     
@@ -153,7 +135,6 @@ function apiGetMasterData() {
       masterCat300 = c300Data.map(r => String(r[0]).trim()).filter(Boolean);
     }
     
-    // Users Signatures
     if (cytoTechSheet) {
       const ctData = cytoTechSheet.getRange(2, 1, Math.max(1, cytoTechSheet.getLastRow() - 1), 2).getValues();
       cytoTechs = ctData.map(r => (String(r[0]).trim() + " " + String(r[1]).trim()).trim()).filter(Boolean);
@@ -255,11 +236,11 @@ function apiVerifyOtp(username, inputOtp) {
       }
       
       const sysSS = SpreadsheetApp.openById(DB_FILES.SYSTEM);
-      const configSheet = sysSS.getSheetByName('Fiscal_Year');
+      const configSheet = sysSS.getSheetByName('Year');
       const years = configSheet.getDataRange().getValues().slice(1).map(r => String(r[0]));
       
       logSystem("Login", "Success with OTP", username);
-      return { status: 'success', user: userData, years: years, currentFiscalYear: getCurrentFiscalYear() };
+      return { status: 'success', user: userData, years: years, currentYear: getCurrentYear() };
     } else { return { status: 'error', message: 'รหัส OTP ไม่ถูกต้อง หรือหมดอายุ' }; }
   } catch (e) { return { status: 'error', message: 'Verify Error: ' + e.message }; }
 }
