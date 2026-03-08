@@ -21,7 +21,7 @@ const app = createApp({
         const loginStep = ref(1);
         const otpInput = ref('');
         const otpMessage = ref('');
-        const appVersion = "1.3.0 AI Edition"; // อัปเดตเวอร์ชัน 1.3.0 AI Edition
+        const appVersion = "1.3.1 AI Edition"; // อัปเดตเวอร์ชัน 1.3.1 AI Edition
         
         // --- Security / Lock Screen ---
         const isLocked = ref(false);
@@ -91,12 +91,23 @@ const app = createApp({
             '124 Glandular cells status post hysterectomy', '125 Atrophy'
         ];
 
-        // --- Filter States ---
+        // --- Helper: Date Calculation for Defaults ---
+        const getFirstDayOfMonth = () => {
+            const date = new Date();
+            return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-01`;
+        };
+        const getLastDayOfMonth = () => {
+            const date = new Date();
+            const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+            return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(lastDay.getDate()).padStart(2, '0')}`;
+        };
+
+        // --- Filter States (With New Defaults) ---
         const unitFilter = ref('All'); 
         const searchQuery = ref('');
-        const statusFilter = ref('All'); 
-        const dashDateStart = ref('');
-        const dashDateEnd = ref('');
+        const statusFilter = ref('Pending'); // เปลี่ยน Default เป็น รอผล
+        const dashDateStart = ref(getFirstDayOfMonth()); // Default ต้นเดือน
+        const dashDateEnd = ref(getLastDayOfMonth()); // Default ปลายเดือน
 
         const defaultForm = {
             rowId: '', cytoNo: '', cytoNoPreview: '',
@@ -115,7 +126,9 @@ const app = createApp({
             searchContra: '', showContraList: false, contraOtherText: '',
             showPrevTxList: false, prevTxSelections: [], prevTxOtherText: '',
             lmpType: 'ระบุวันที่', lmpDate: '',
-            reportDateStart: '', reportDateEnd: '', reportSearch: '',
+            reportDateStart: getFirstDayOfMonth(), // Default ต้นเดือน
+            reportDateEnd: getLastDayOfMonth(), // Default ปลายเดือน
+            reportSearch: '',
             reportAdditionalOther: '',
             showPatientInfo: false,
             showOrganismList: false, 
@@ -139,6 +152,57 @@ const app = createApp({
             cytoName: '', cytoDate: '', cytoTime: '',
             hasPatho: false, pathoName: '', pathoDate: '', pathoTime: ''
         });
+
+        // --- Preferences System (Save/Load Filters) ---
+        const PREFS_KEY = 'cytoPrefs_v99';
+        const loadPrefs = () => {
+            try {
+                const prefsStr = localStorage.getItem(PREFS_KEY);
+                if (prefsStr) {
+                    const p = JSON.parse(prefsStr);
+                    // Load Year (Fall back to current Thai year if not found)
+                    if (p.selectedYear && config.years.includes(p.selectedYear)) {
+                        config.selectedYear = p.selectedYear;
+                    } else {
+                        const currentThaiYear = (new Date().getFullYear() + 543).toString();
+                        if (config.years.includes(currentThaiYear)) config.selectedYear = currentThaiYear;
+                    }
+                    
+                    if (p.statusFilter) statusFilter.value = p.statusFilter;
+                    if (p.dashDateStart !== undefined) dashDateStart.value = p.dashDateStart;
+                    if (p.dashDateEnd !== undefined) dashDateEnd.value = p.dashDateEnd;
+                    if (p.reportDateStart !== undefined) ui.reportDateStart = p.reportDateStart;
+                    if (p.reportDateEnd !== undefined) ui.reportDateEnd = p.reportDateEnd;
+                } else {
+                    const currentThaiYear = (new Date().getFullYear() + 543).toString();
+                    if (config.years.includes(currentThaiYear)) config.selectedYear = currentThaiYear;
+                }
+            } catch(e) {}
+        };
+
+        const savePrefs = () => {
+            const p = {
+                selectedYear: config.selectedYear,
+                statusFilter: statusFilter.value,
+                dashDateStart: dashDateStart.value,
+                dashDateEnd: dashDateEnd.value,
+                reportDateStart: ui.reportDateStart,
+                reportDateEnd: ui.reportDateEnd
+            };
+            localStorage.setItem(PREFS_KEY, JSON.stringify(p));
+        };
+
+        // Watch for changes to save preferences automatically
+        watch([() => config.selectedYear, statusFilter, dashDateStart, dashDateEnd, () => ui.reportDateStart, () => ui.reportDateEnd], () => {
+            if (page.value !== 'login') savePrefs();
+        }, { deep: true });
+
+        // --- Computed AI Smart Blur Condition Logic ---
+        const hasData100 = computed(() => formReport.organismSelections.length > 0 || formReport.nonNeoSelections.length > 0 || !!formReport.organismOtherText || ui.showOrganismList || ui.showNonNeoList);
+        const hasData200Sq = computed(() => !!formReport.squamousMain);
+        const hasData200Gl = computed(() => !!formReport.glandularMain);
+        const hasData300 = computed(() => !!formReport.cat300);
+        const hasDataComment = computed(() => !!formReport.comment);
 
         watch(() => formReport.squamousMain, (newVal, oldVal) => {
              if(oldVal && newVal !== oldVal) {
@@ -629,8 +693,11 @@ const app = createApp({
                     if(parsed.theme) changeTheme(parsed.theme);
                     if (parsed.years) {
                         config.years = parsed.years;
-                        const currYear = parsed.currentFiscalYear ? parsed.currentFiscalYear.toString() : "";
-                        config.selectedYear = config.years.includes(currYear) ? currYear : config.years[config.years.length - 1];
+                    }
+                    
+                    loadPrefs();
+                    if (!config.selectedYear && config.years.length > 0) {
+                        config.selectedYear = config.years[config.years.length - 1];
                     }
                     
                     page.value = 'dashboard';
@@ -711,13 +778,15 @@ const app = createApp({
                     Object.assign(user, res.user); 
                     config.years = res.years || [];
                     
-                    const currYear = res.currentFiscalYear ? res.currentFiscalYear.toString() : "";
-                    config.selectedYear = config.years.includes(currYear) ? currYear : config.years[config.years.length - 1];
+                    loadPrefs();
+                    if (!config.selectedYear && config.years.length > 0) {
+                        config.selectedYear = config.years[config.years.length - 1];
+                    }
                     
                     localStorage.setItem('cytoUser_v99', JSON.stringify({ 
                         user: res.user, 
                         years: res.years, 
-                        currentFiscalYear: res.currentFiscalYear, 
+                        currentYear: res.currentYear, 
                         systemLogo: systemConfig.logoUrl, 
                         theme: theme.value,
                         isLocked: false, 
@@ -1004,11 +1073,8 @@ const app = createApp({
 
         const openReportList = () => { 
             page.value = 'report_list'; 
-            ui.reportDateStart = ''; 
-            ui.reportDateEnd = ''; 
             ui.reportSearch = ''; 
             unitFilter.value = 'All'; 
-            statusFilter.value = 'All'; 
         };
 
         const parseDateTimeString = (dtStr) => {
@@ -1117,227 +1183,248 @@ const app = createApp({
 
             formReport.cytoName = patient.cytoName || '';
             const cytoDT = parseDateTimeString(patient.cytoDateTime);
-            formReport.cytoDate = cytoDT.date; 
+            formReport.cytoDate = cytoDT.date;
             formReport.cytoTime = cytoDT.time;
-
+            
             formReport.pathoName = patient.pathoName || '';
-            const pathoDT = parseDateTimeString(patient.pathoDateTime);
-            formReport.pathoDate = pathoDT.date; 
-            formReport.pathoTime = pathoDT.time;
-            formReport.hasPatho = !!formReport.pathoName;
+            if (patient.pathoName) {
+                formReport.hasPatho = true;
+                const pathoDT = parseDateTimeString(patient.pathoDateTime);
+                formReport.pathoDate = pathoDT.date;
+                formReport.pathoTime = pathoDT.time;
+            } else {
+                formReport.hasPatho = false;
+                formReport.pathoDate = '';
+                formReport.pathoTime = '';
+            }
+
+            // ถ้าเป็นรายการใหม่ (Pending) และไม่ได้อ่านอย่างเดียว ให้ดึงชื่อและเวลาปัจจุบันมาตั้งต้นให้เลย (เฉพาะ Cytotech)
+            if (!isReadonly && patient.status === 'Pending') {
+                if (user.role !== 'Admin' && masterCytoTechs.value.includes(user.name)) {
+                    formReport.cytoName = user.name;
+                }
+                const now = new Date();
+                const pad = (n) => String(n).padStart(2, '0');
+                formReport.cytoDate = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+                formReport.cytoTime = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+            }
 
             page.value = 'report_form';
-            const mainEl = document.querySelector('main'); 
-            if(mainEl) mainEl.scrollTop = 0;
         };
 
         const submitReport = async () => {
             if (viewMode.value) return;
-            
-            if (!formReport.adequacy) { 
-                if(typeof Swal !== 'undefined') Swal.fire('แจ้งเตือน', 'กรุณาเลือก SPECIMEN ADEQUACY', 'warning'); 
-                return; 
-            }
-            
-            if (formReport.organismSelections.includes('109 Other organism') && !formReport.organismOtherText.trim()) {
-                if(typeof Swal !== 'undefined') Swal.fire('ข้อมูลไม่ครบ', 'กรุณาระบุคำอธิบายสำหรับ 109 Other organism', 'warning');
+
+            // ตรวจสอบความครบถ้วน
+            if (!formReport.adequacy) {
+                if (typeof Swal !== 'undefined') Swal.fire('ข้อมูลไม่ครบ', 'กรุณาประเมินความสมบูรณ์ของสิ่งส่งตรวจ (Adequacy)', 'warning');
                 return;
             }
-            
-            if (formReport.squamousMain && formReport.squamousMain !== 'Atypical squamous cell' && formReport.squamousMain !== 'Low grade squamous intraepithelial lesion (LSIL) encompassing' && formReport.squamousMain !== 'High grade squamous intraepithelial lesion (HSIL) encompassing') {
-                 // ข้าม
-            } else if (formReport.squamousMain && !formReport.squamousSubSingle) {
-                if(typeof Swal !== 'undefined') Swal.fire('ข้อมูลไม่ครบ', 'กรุณาเลือกรายละเอียด Squamous cell', 'warning'); 
-                 return;
-            }
 
-            if (formReport.squamousSubSingle === '241 SIL' && !formReport.vainOption) {
-                 if(typeof Swal !== 'undefined') Swal.fire('ข้อมูลไม่ครบ', 'กรุณาเลือกระดับ VAIN', 'warning'); 
-                 return;
-            }
-
-            if (formReport.glandularMain && formReport.glandularMain !== '281 Endocervical adenocarcinoma in situ (AIS)' && !formReport.glandularSub) {
-                if(typeof Swal !== 'undefined') Swal.fire('ข้อมูลไม่ครบ', 'กรุณาเลือกรายละเอียด Glandular cell', 'warning'); 
-                 return;
-            }
-
-            if(typeof Swal === 'undefined') return;
-            
-            const confirm = await Swal.fire({ 
-                title: 'ยืนยันการบันทึกผล?', 
-                text: `ผู้ป่วย: ${formReport.patient.fname} ${formReport.patient.lname}`, 
-                icon: 'question', 
-                showCancelButton: true, 
-                confirmButtonText: 'บันทึก', 
-                confirmButtonColor: '#10b981' 
+            if (typeof Swal === 'undefined') return;
+            const confirm = await Swal.fire({
+                title: 'ยืนยันการรายงานผล?',
+                text: 'คุณตรวจสอบความถูกต้องของข้อมูลอย่างถี่ถ้วนแล้วใช่หรือไม่?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'ยืนยันรายงานผล',
+                confirmButtonColor: '#10b981'
             });
-            
+
             if (confirm.isConfirmed) {
                 isLoading.value = true;
                 try {
-                    let finalOrganism = [];
-                    formReport.organismSelections.forEach(org => {
-                        if (org === '109 Other organism') {
-                            if (formReport.organismOtherText) {
-                                finalOrganism.push('109 Other organism - ' + formReport.organismOtherText);
-                            } else {
-                                finalOrganism.push('109 Other organism');
-                            }
-                        } else {
-                            finalOrganism.push(org);
-                        }
-                    });
-                    
-                    let finalSqSub = '';
-                    if (formReport.squamousMain) {
-                        finalSqSub = formReport.squamousSubSingle;
-                        if (finalSqSub === '241 SIL' && formReport.vainOption) {
-                            finalSqSub = `241 SIL - ${formReport.vainOption}`;
-                        }
-                    }
-
-                    const payload = { 
-                        rowId: formReport.rowId, 
-                        isEdit: formReport.patient.status === 'Reported', 
-                        adequacy: formReport.adequacy, 
-                        adequacyDetail: formReport.adequacyDetail, 
-                        additional: formReport.additional === '029 Other' && ui.reportAdditionalOther ? `029 Other - ${ui.reportAdditionalOther}` : formReport.additional, 
+                    const payload = {
+                        rowId: formReport.rowId,
+                        isEdit: formReport.patient.status === 'Reported',
+                        adequacy: formReport.adequacy,
+                        adequacyDetail: formReport.adequacyDetail,
+                        additional: formReport.additional === '029 Other' ? '029 Other - ' + ui.reportAdditionalOther : formReport.additional,
                         
-                        organism: finalOrganism.join(', '),
+                        organism: '',
                         nonNeo: formReport.nonNeoSelections.join(', '),
                         
                         squamousMain: formReport.squamousMain,
-                        squamousSub: finalSqSub,
+                        squamousSub: '',
                         glandularMain: formReport.glandularMain,
-                        glandularSub: formReport.glandularMain === '281 Endocervical adenocarcinoma in situ (AIS)' ? '' : formReport.glandularSub,
-
-                        cat300: formReport.cat300, 
+                        glandularSub: formReport.glandularSub,
+                        
+                        cat300: formReport.cat300,
                         comment: formReport.comment,
-                        
-                        cytoName: formReport.cytoName, 
+                        cytoName: formReport.cytoName,
                         cytoDateTime: formatSignatureDate(formReport.cytoDate, formReport.cytoTime),
-                        
-                        pathoName: formReport.hasPatho ? formReport.pathoName : '', 
+                        pathoName: formReport.hasPatho ? formReport.pathoName : '',
                         pathoDateTime: formReport.hasPatho ? formatSignatureDate(formReport.pathoDate, formReport.pathoTime) : ''
                     };
-                    
+
+                    // จัดการข้อมูล Organism
+                    let orgList = [];
+                    formReport.organismSelections.forEach(org => {
+                        if (org === '109 Other organism') {
+                            orgList.push('109 Other organism - ' + formReport.organismOtherText);
+                        } else {
+                            orgList.push(org);
+                        }
+                    });
+                    payload.organism = orgList.join(', ');
+
+                    // จัดการข้อมูล Squamous Sub
+                    if (formReport.squamousSubSingle === '241 SIL') {
+                        payload.squamousSub = '241 SIL - ' + formReport.vainOption;
+                    } else {
+                        payload.squamousSub = formReport.squamousSubSingle;
+                    }
+
+                    // ป้องกันความผิดพลาดทางวิชาการ: ล้างข้อมูลส่วนอื่น หากประเมินว่า 030 Unsatisfactory
+                    if (formReport.adequacy === '030 Unsatisfactory for evaluation') {
+                        payload.organism = ''; payload.nonNeo = '';
+                        payload.squamousMain = ''; payload.squamousSub = '';
+                        payload.glandularMain = ''; payload.glandularSub = '';
+                        payload.cat300 = '';
+                    }
+
                     const res = await runGas('apiSubmitReport', payload, config.selectedYear, user.username);
-                    
-                    if (res && res.status === 'success') { 
-                        Swal.fire({ 
-                            icon: 'success', 
-                            title: 'สำเร็จ', 
-                            text: 'บันทึกข้อมูลผลตรวจเรียบร้อย', 
-                            confirmButtonText: 'ตกลง' 
-                        }).then(() => { 
-                            page.value = 'report_list'; 
-                            fetchData(); 
-                        }); 
-                    } else { 
-                        Swal.fire('Error', res.message, 'error'); 
+                    if (res && res.status === 'success') {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'บันทึกผลสำเร็จ',
+                            timer: 1500,
+                            showConfirmButton: false
+                        }).then(() => {
+                            page.value = 'report_list';
+                            fetchData();
+                        });
+                    } else {
+                        Swal.fire('Error', res.message, 'error');
                     }
                 } catch (err) {
                     console.error(err);
-                } finally { 
-                    isLoading.value = false; 
+                    Swal.fire('Error', 'เกิดข้อผิดพลาดในการเชื่อมต่อ', 'error');
+                } finally {
+                    isLoading.value = false;
                 }
             }
         };
 
         const handleImageUpload = (event, type) => {
-            const file = event.target.files[0]; 
+            const file = event.target.files[0];
             if (!file) return;
-            const reader = new FileReader();
             
+            const maxSize = 2 * 1024 * 1024; // Limit at 2MB for stability
+            if (file.size > maxSize) {
+                if (typeof Swal !== 'undefined') Swal.fire('ขนาดไฟล์เกิน', 'กรุณาอัปโหลดรูปภาพขนาดไม่เกิน 2MB', 'warning');
+                return;
+            }
+
+            const reader = new FileReader();
             reader.onload = async (e) => {
-                const base64 = e.target.result; 
+                const base64Data = e.target.result;
                 isLoading.value = true;
                 try {
+                    let res;
                     if (type === 'profile') {
-                        const res = await runGas('apiSaveProfileImage', user.username, base64);
-                        if (res && res.status === 'success') { 
-                            user.image = res.url; 
-                            const saved = JSON.parse(localStorage.getItem('cytoUser_v99') || '{}'); 
-                            if(saved.user) saved.user.image = res.url; 
-                            localStorage.setItem('cytoUser_v99', JSON.stringify(saved)); 
-                            
-                            if(typeof Swal !== 'undefined') Swal.fire('สำเร็จ', 'อัปโหลดรูปโปรไฟล์', 'success'); 
-                        }
+                        res = await runGas('apiSaveProfileImage', user.username, base64Data);
                     } else if (type === 'logo') {
-                        const res = await runGas('apiSaveSystemLogo', base64, user.username);
-                        if (res && res.status === 'success') { 
-                            systemConfig.logoUrl = res.url; 
-                            const saved = JSON.parse(localStorage.getItem('cytoUser_v99') || '{}'); 
-                            saved.systemLogo = res.url; 
-                            localStorage.setItem('cytoUser_v99', JSON.stringify(saved)); 
-                            
-                            if(typeof Swal !== 'undefined') Swal.fire('สำเร็จ', 'อัปโหลด Logo', 'success'); 
+                        res = await runGas('apiSaveSystemLogo', base64Data, user.username);
+                    }
+
+                    if (res && res.status === 'success') {
+                        if (type === 'profile') {
+                            user.image = res.url;
+                            const savedUserStr = localStorage.getItem('cytoUser_v99');
+                            if (savedUserStr) {
+                                const savedUser = JSON.parse(savedUserStr);
+                                savedUser.user.image = res.url;
+                                localStorage.setItem('cytoUser_v99', JSON.stringify(savedUser));
+                            }
+                        } else if (type === 'logo') {
+                            systemConfig.logoUrl = res.url;
+                            const savedUserStr = localStorage.getItem('cytoUser_v99');
+                            if (savedUserStr) {
+                                const savedUser = JSON.parse(savedUserStr);
+                                savedUser.systemLogo = res.url;
+                                localStorage.setItem('cytoUser_v99', JSON.stringify(savedUser));
+                            }
                         }
+                        if (typeof Swal !== 'undefined') Swal.fire('สำเร็จ', 'อัปเดตรูปภาพเรียบร้อยแล้ว', 'success');
+                    } else {
+                        if (typeof Swal !== 'undefined') Swal.fire('ผิดพลาด', res.message, 'error');
                     }
                 } catch (err) {
                     console.error(err);
-                } finally { 
-                    isLoading.value = false; 
+                    if (typeof Swal !== 'undefined') Swal.fire('ผิดพลาด', 'เกิดข้อผิดพลาดในการเชื่อมต่อ', 'error');
+                } finally {
+                    isLoading.value = false;
                 }
-            }; 
+            };
             reader.readAsDataURL(file);
         };
 
         const openChangePassword = async () => {
-            if(typeof Swal === 'undefined') return;
-            const { value: formValues } = await Swal.fire({ 
-                title: 'เปลี่ยนรหัสผ่าน', 
-                html: `
-                    <input type="password" id="swal-pass1" class="swal2-input" placeholder="รหัสผ่านใหม่">
-                    <input type="password" id="swal-pass2" class="swal2-input" placeholder="ยืนยันรหัสผ่าน">
-                `, 
-                focusConfirm: false, 
-                showCancelButton: true, 
-                confirmButtonText: 'บันทึก', 
-                preConfirm: () => { 
-                    const p1 = document.getElementById('swal-pass1').value; 
-                    const p2 = document.getElementById('swal-pass2').value; 
-                    if (!p1 || !p2) {
-                        Swal.showValidationMessage('กรอกข้อมูลให้ครบ'); 
-                    } else if (p1 !== p2) {
-                        Swal.showValidationMessage('รหัสผ่านไม่ตรงกัน'); 
+            if (typeof Swal === 'undefined') return;
+            const { value: newPassword } = await Swal.fire({
+                title: 'เปลี่ยนรหัสผ่าน',
+                input: 'password',
+                inputLabel: 'รหัสผ่านใหม่',
+                inputPlaceholder: 'กรอกรหัสผ่านใหม่ที่ต้องการ',
+                showCancelButton: true,
+                confirmButtonText: 'บันทึก',
+                cancelButtonText: 'ยกเลิก',
+                inputValidator: (value) => {
+                    if (!value) {
+                        return 'กรุณากรอกรหัสผ่าน!'
                     }
-                    return p1; 
-                } 
+                    if (value.length < 4) {
+                        return 'รหัสผ่านต้องมีอย่างน้อย 4 ตัวอักษร!'
+                    }
+                }
             });
-            
-            if (formValues) { 
-                isLoading.value = true; 
-                try { 
-                    const res = await runGas('apiChangePassword', user.username, formValues); 
+
+            if (newPassword) {
+                isLoading.value = true;
+                try {
+                    const res = await runGas('apiChangePassword', user.username, newPassword);
                     if (res && res.status === 'success') {
-                        Swal.fire('สำเร็จ', 'เปลี่ยนรหัสผ่านเรียบร้อย', 'success'); 
+                        Swal.fire('สำเร็จ', 'รหัสผ่านส่วนตัวถูกเปลี่ยนแปลงแล้ว', 'success');
                     } else {
-                        Swal.fire('Error', res.message, 'error'); 
+                        Swal.fire('ผิดพลาด', res.message, 'error');
                     }
-                } catch(e) {
-                    console.error(e);
-                } finally { 
-                    isLoading.value = false; 
-                } 
+                } catch (err) {
+                    console.error(err);
+                    Swal.fire('ผิดพลาด', 'ไม่สามารถเชื่อมต่อระบบได้', 'error');
+                } finally {
+                    isLoading.value = false;
+                }
             }
         };
 
+        // --- EXPORT TO TEMPLATE ---
         return {
-            page, isLoading, isDataLoading, isSpinning, isEditMode, viewMode, isSidebarOpen, isDashboardTopOpen, 
-            statusFilter, unitFilter, dashDateStart, dashDateEnd, showSettingsModal, showProfileModal, loginStep, otpInput, otpMessage,
-            user, config, formLogin, stats, tatOverview, patients, filteredPatients, progressPercent, unitStats,
-            canAccessReport, formReg, prefixes, searchQuery, systemConfig,
-            ui, masterDistricts, masterContras, masterPrevTx, masterCytoTechs, masterPathos, masterUnits, masterOrganism, masterNonNeo, masterCat300,
-            logoRef, isLogoPlaying, toggleLogo, appVersion,
-            theme, changeTheme, isLocked, lockPassword, lockError, lockScreen, unlockScreen, handleMainScroll, handleTableScroll,
-            submitRegister, handleLoginStep1, handleLoginStep2, handleLogout, fetchData, openRegisterPage, openEditMode, openViewMode,
-            handleImageUpload, openChangePassword, selectContra, togglePrevTx, toggleOrganism, toggleNonNeo, closeAllDropdowns,
-            getMethodColor, getTAT,
-            filteredReportPatients, openReportList, openReportForm, formReport, adequacyDetailOptions, additionalOptions, submitReport,
-            squamousDetailOptions, squamousSubDetailOptions, glandularDetailOptions
+            page, loginStep, otpInput, otpMessage, appVersion,
+            isLocked, lockPassword, lockError, unlockScreen, lockScreen,
+            theme, changeTheme,
+            isLoading, isDataLoading, isSpinning, isEditMode, viewMode, 
+            isSidebarOpen, isDashboardTopOpen,
+            showSettingsModal, showProfileModal,
+            user, systemConfig, config, formLogin, stats, patients,
+            masterUnits, masterDistricts, masterAdequacy, masterCytoTechs, masterPathos,
+            masterSquamous, masterGlandular, masterCat300, masterContras, masterPrevTx,
+            masterOrganism, masterNonNeo,
+            unitFilter, searchQuery, statusFilter, dashDateStart, dashDateEnd,
+            formReg, prefixes, ui, formReport,
+            hasData100, hasData200Sq, hasData200Gl, hasData300, hasDataComment,
+            progressPercent, canAccessReport, tatOverview, unitStats,
+            squamousDetailOptions, squamousSubDetailOptions, glandularDetailOptions, adequacyDetailOptions, additionalOptions,
+            filteredPatients, filteredReportPatients,
+            closeAllDropdowns, selectContra, togglePrevTx, toggleOrganism, toggleNonNeo, getMethodColor,
+            logoRef, isLogoPlaying, toggleLogo, getTAT,
+            handleLoginStep1, handleLoginStep2, handleLogout, fetchData, getNextCytoPreview,
+            openRegisterPage, openEditMode, openViewMode, submitRegister,
+            openReportList, openReportForm, submitReport,
+            handleImageUpload, openChangePassword, handleMainScroll, handleTableScroll
         };
     }
 });
+
 app.mount('#app');
 </script>
