@@ -50,7 +50,6 @@
       transition: background-color 0.5s ease, color 0.5s ease;
   }
   
-  /* แก้ไข SweetAlert ให้ลอยอยู่เหนือ Lock Screen เสมอ */
   .swal2-container { z-index: 9999 !important; }
 
   .theme-text { color: var(--text-main); }
@@ -74,10 +73,10 @@
       border-right: 1px solid var(--border-color);
   }
 
-  /* --- CHANGED: Inputs & Labels --- */
+  /* Inputs & Labels */
   .label-sm { 
       display: block; 
-      font-size: 0.875rem; /* 14px */
+      font-size: 0.875rem;
       font-weight: 700; 
       color: var(--text-muted); 
       margin-bottom: 0.1rem; 
@@ -87,7 +86,7 @@
       border: 1px solid var(--border-input); 
       padding: 0.35rem 0.6rem;
       border-radius: 0.5rem; 
-      font-size: 0.9375rem; /* 15px */
+      font-size: 0.9375rem;
       outline: none; 
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
       background: var(--bg-input);
@@ -107,7 +106,6 @@
       box-shadow: none !important;
   }
 
-  /* Table Adjustments */
   th.py-2\.5, td.py-2\.5 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
 
   /* Transitions & Animations */
@@ -118,7 +116,6 @@
   .slide-fade-leave-active { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
   .slide-fade-enter-from, .slide-fade-leave-to { transform: translateY(20px); opacity: 0; }
 
-  /* Lock Screen Animation */
   .screen-lock-enter-active, .screen-lock-leave-active { transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
   .screen-lock-enter-from, .screen-lock-leave-to { opacity: 0; backdrop-filter: blur(0px); transform: scale(1.05); }
 
@@ -131,16 +128,13 @@
   ::-webkit-scrollbar-thumb { background: var(--border-input); border-radius: 10px; }
   ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
   
-  /* Hide Number Arrows */
   input[type="number"]::-webkit-outer-spin-button,
   input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
   input[type="number"] { -moz-appearance: textfield; }
 
-  /* Energy Bar Animation */
   .animate-energy-bar { background-size: 200% 200%; animation: energyFlow 3.2s linear infinite; }
   @keyframes energyFlow { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 
-  /* Deep Space & Pastel Blobs (Login/Lock Screen) */
   .bg-deep-space { background-color: #0f172a; } 
   @keyframes blob {
     0% { transform: translate(0px, 0px) scale(1); }
@@ -152,7 +146,6 @@
   .animation-delay-2000 { animation-delay: 2s; }
   .animation-delay-4000 { animation-delay: 4s; }
 
-  /* Animated Pastel Text */
   @keyframes pastel-breathing {
     0% { background-position: 0% 50%; }
     50% { background-position: 100% 50%; }
@@ -168,7 +161,6 @@
     margin-bottom: -0.15em; 
   }
 
-  /* Gimmick Effect สำหรับชื่อนักพัฒนา */
   .gimmick-hover {
     transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     display: inline-block;
@@ -181,5 +173,25 @@
     animation: pastel-breathing 4s ease infinite;
     transform: scale(1.15) translateY(-2px);
     font-weight: 900;
+  }
+
+  /* --- AI Smart Blur Effect for Report Form --- */
+  .smart-blur-wrapper {
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+  }
+  .smart-blur-content {
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .smart-blur-wrapper.is-blurred .smart-blur-content {
+      filter: blur(5px);
+      opacity: 0.4;
+      pointer-events: none;
+      user-select: none;
+  }
+  .smart-blur-wrapper.is-blurred:hover .smart-blur-content {
+      filter: blur(0px);
+      opacity: 1;
+      pointer-events: auto;
   }
 </style>
