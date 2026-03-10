@@ -238,11 +238,8 @@
 
             <!-- 5. Navigation Links -->
             <nav class="flex-1 p-3 space-y-1.5 overflow-y-auto overflow-x-hidden">
-                <a href="#" @click.prevent="openRegisterPage" :class="['flex items-center gap-4 px-3 py-3.5 rounded-2xl transition-all group overflow-hidden', page === 'register' ? 'bg-pink-500/10 text-pink-600 shadow-sm border border-pink-500/20' : 'theme-text-muted hover:bg-black/5 hover:theme-text']" :title="!isSidebarOpen ? 'ลงทะเบียน' : ''">
-                    <div class="w-8 flex justify-center"><i class="ph ph-user-plus text-2xl group-hover:text-pink-500 group-hover:-translate-y-1 transition-transform"></i></div>
-                    <span v-show="isSidebarOpen" class="whitespace-nowrap font-bold text-[15px]">ลงทะเบียน</span>
-                </a>
-                <a href="#" @click.prevent="page = 'dashboard'" :class="['flex items-center gap-4 px-3 py-3.5 rounded-2xl transition-all group overflow-hidden', page === 'dashboard' ? 'bg-blue-500/10 text-blue-600 shadow-sm border border-blue-500/20' : 'theme-text-muted hover:bg-black/5 hover:theme-text']" :title="!isSidebarOpen ? 'รายการผู้รับบริการ' : ''">
+                <!-- Removed Register Button from Sidebar as requested -->
+                <a href="#" @click.prevent="page = 'dashboard'" :class="['flex items-center gap-4 px-3 py-3.5 rounded-2xl transition-all group overflow-hidden', ['dashboard', 'register'].includes(page) ? 'bg-blue-500/10 text-blue-600 shadow-sm border border-blue-500/20' : 'theme-text-muted hover:bg-black/5 hover:theme-text']" :title="!isSidebarOpen ? 'รายการผู้รับบริการ' : ''">
                     <div class="w-8 flex justify-center"><i class="ph ph-users-three text-2xl group-hover:text-blue-500 transition-all"></i></div>
                     <span v-show="isSidebarOpen" class="whitespace-nowrap font-bold text-[15px]">รายการผู้รับบริการ</span>
                 </a>
@@ -409,6 +406,12 @@
                                 </select>
                                 <i class="ph ph-caret-down absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none group-hover:text-indigo-500 transition-colors text-[10px]"></i>
                             </div>
+                            
+                            <!-- Register Button Moved Here -->
+                            <button @click="openRegisterPage" class="bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white px-4 py-2 rounded-xl shadow-sm transition transform hover:-translate-y-0.5 flex items-center gap-2 text-sm font-bold border border-pink-600/50">
+                                <i class="ph ph-plus-circle text-lg"></i> ลงทะเบียนใหม่
+                            </button>
+
                             <button @click="fetchData" class="bg-blue-50 hover:bg-blue-100 text-blue-700 px-4 py-2 rounded-xl shadow-sm transition flex items-center gap-2 text-sm font-bold border border-blue-200">
                                 <i class="ph ph-arrows-clockwise text-lg" :class="{'animate-spin': isSpinning}"></i> อัปเดตข้อมูล
                             </button>
