@@ -1,20 +1,20 @@
 // =====================================================================
-// CytoFlow v1.3.1 AI Edition - Multi-Database Architecture (SaaS Ready)
+// CytoFlow v1.3.3 AI Edition - Multi-Database Architecture (SaaS Ready)
 // =====================================================================
 
 // --- DATABASE CONFIGURATION ---
 // นำ ID ของ Google Sheets ทั้ง 4 ไฟล์มาใส่ที่นี่
 const DB_FILES = {
-  SYSTEM: 'XXXX',    // [Sheets]: Year, App_Logo
-  USER: 'XXXX',      // [Sheets]: Users, Cytotechnologist, Pathologist
-  REF: 'XXXX',  // [Sheets]: SPECIMEN ADEQUACY, 200 Squamous Cell, 200 Glandular Cell, 300 OTHER, Sampling_Unit, District
-  LOG: 'XXXX'        // [Sheets]: System_Logs, Log_2569, Log_2570...
+  SYSTEM: 'XXXX',      // [Sheets]: Master_Config
+  USER: 'XXXX',        // [Sheets]: User_Config
+  REF: 'XXXX',         // [Sheets]: Reference_Data_Config
+  LOG: 'XXXX'          // [Sheets]: Log_Config
 };
 
 function doGet() {
   return HtmlService.createTemplateFromFile('index')
     .evaluate()
-    .setTitle('CytoFlow 2026 (v1.3.1 AI Edition)')
+    .setTitle('CytoFlow 2026 (v1.3.3 AI Edition)')
     .addMetaTag('viewport', 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no')
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
@@ -37,6 +37,30 @@ function formatDateTimeVal(val) {
     return Utilities.formatDate(val, Session.getScriptTimeZone(), "dd/MM/yyyy HH:mm:ss");
   }
   return String(val);
+}
+
+// Helper: สำหรับเปรียบเทียบเพื่อทำ Audit Log
+function safeString(val) {
+  if (val instanceof Date) return Utilities.formatDate(val, Session.getScriptTimeZone(), "yyyy-MM-dd");
+  if (val === null || val === undefined) return "";
+  return String(val).trim();
+}
+
+function getDiffString(oldArr, newArr, headers) {
+  let diffs = [];
+  for (let i = 0; i < oldArr.length; i++) {
+     let oldVal = safeString(oldArr[i]);
+     let newVal = safeString(newArr[i]);
+     
+     // Remove leading tick for clean logging
+     if(oldVal.startsWith("'")) oldVal = oldVal.substring(1);
+     if(newVal.startsWith("'")) newVal = newVal.substring(1);
+
+     if (oldVal !== newVal) {
+        diffs.push(`[${headers[i]}]: '${oldVal}' -> '${newVal}'`);
+     }
+  }
+  return diffs.length > 0 ? diffs.join(' | ') : 'No data changed';
 }
 
 // Helper: ดึง Sheet ข้อมูลคนไข้ตามปี
@@ -88,6 +112,12 @@ function logData(year, action, detail, username, cytoNo) {
 function getCurrentYear() {
   const today = new Date();
   return today.getFullYear() + 543; // ปี พ.ศ. ปัจจุบัน
+}
+
+// ให้ Frontend เรียกใช้บันทึก Log ได้ (เช่น Logout, Cancel)
+function apiFrontendLog(action, detail, username) {
+  logSystem(action, detail, username);
+  return { status: 'success' };
 }
 
 // --- API: GET MASTER DATA (ดึงจากหลายไฟล์) ---
@@ -191,10 +221,16 @@ function apiLoginStep1(username, password) {
       if (logoSheet && logoSheet.getLastRow() > 1) logoUrl = logoSheet.getRange(2, 2).getValue();
     } catch(e) { console.log("Logo fetch error: " + e); }
 
+    let userFound = false;
+
     for (let i = 1; i < data.length; i++) {
       if (String(data[i][0]) == String(username) && String(data[i][1]) == String(password)) {
+        userFound = true;
         const email = data[i][5];
-        if (!email || email === "") return { status: 'error', message: 'Account นี้ยังไม่ระบุ Email ในระบบ' };
+        if (!email || email === "") {
+          logSystem("Login Failed", "Account missing email", username);
+          return { status: 'error', message: 'Account นี้ยังไม่ระบุ Email ในระบบ' };
+        }
         
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
         // ตั้งเวลา OTP หมดอายุที่ 300 วินาที (5 นาที)
@@ -238,17 +274,25 @@ function apiLoginStep1(username, password) {
             to: email, 
             subject: "รหัส OTP สำหรับเข้าสู่ระบบ CytoFlow", 
             htmlBody: htmlTemplate,
-            name: "CytoFlow" // เปลี่ยนชื่อผู้ส่งตามต้องการ
+            name: "CytoFlow" 
           }); 
+          logSystem("OTP Requested", "OTP sent to user email", username);
         } 
-        catch (mailErr) { return { status: 'error', message: 'ส่งอีเมล OTP ไม่สำเร็จ: ' + mailErr.message }; }
+        catch (mailErr) { 
+          logSystem("OTP Error", "Failed to send OTP email: " + mailErr.message, username);
+          return { status: 'error', message: 'ส่งอีเมล OTP ไม่สำเร็จ: ' + mailErr.message }; 
+        }
 
         const maskedEmail = email.replace(/^(.)(.*)(.@.*)$/, "$1***$3");
         return { status: 'otp_required', message: 'กรุณากรอกรหัส OTP ที่ส่งไปยัง ' + maskedEmail, systemLogo: logoUrl };
       }
     }
+    
+    logSystem("Login Failed", "Invalid username or password", username);
     return { status: 'error', message: 'Username หรือ Password ไม่ถูกต้อง' };
-  } catch (e) { return { status: 'error', message: 'System Error: ' + e.message }; }
+  } catch (e) { 
+    return { status: 'error', message: 'System Error: ' + e.message }; 
+  }
 }
 
 function apiVerifyOtp(username, inputOtp) {
@@ -273,9 +317,12 @@ function apiVerifyOtp(username, inputOtp) {
       const configSheet = sysSS.getSheetByName('Year');
       const years = configSheet.getDataRange().getValues().slice(1).map(r => String(r[0]));
       
-      logSystem("Login", "Success with OTP", username);
+      logSystem("Login Success", "Successfully verified OTP", username);
       return { status: 'success', user: userData, years: years, currentYear: getCurrentYear() };
-    } else { return { status: 'error', message: 'รหัส OTP ไม่ถูกต้อง หรือหมดอายุ' }; }
+    } else { 
+      logSystem("Login Failed", "Invalid or Expired OTP", username);
+      return { status: 'error', message: 'รหัส OTP ไม่ถูกต้อง หรือหมดอายุ' }; 
+    }
   } catch (e) { return { status: 'error', message: 'Verify Error: ' + e.message }; }
 }
 
@@ -286,10 +333,11 @@ function apiVerifyPassword(username, password) {
     const data = sheet.getDataRange().getValues();
     for (let i = 1; i < data.length; i++) {
       if (String(data[i][0]) == String(username) && String(data[i][1]) == String(password)) {
-        logSystem("Unlock Screen", "Successfully unlocked", username);
+        logSystem("Unlock Screen", "Successfully unlocked screen", username);
         return { status: 'success' };
       }
     }
+    logSystem("Unlock Failed", "Invalid password during screen unlock", username);
     return { status: 'error', message: 'รหัสผ่านไม่ถูกต้อง' };
   } catch (e) { return { status: 'error', message: 'System Error: ' + e.message }; }
 }
@@ -368,58 +416,74 @@ function apiRegisterSample(form, year, username) {
   finally { lock.releaseLock(); }
 }
 
-// --- API: UPDATE ---
+// --- API: UPDATE (WITH FORENSIC DIFF AUDIT LOG) ---
 function apiUpdateSample(form, year, rowId, username) {
   const lock = LockService.getScriptLock(); lock.tryLock(10000);
   try {
-    const sheet = getDbSheet(year); const rowIndex = parseInt(rowId);
+    const sheet = getDbSheet(year); 
+    const rowIndex = parseInt(rowId);
     if (rowIndex > sheet.getLastRow()) return { status: 'error', message: 'Row not found' };
+    
+    // 1. Get Old Data for Diff
+    const oldData = sheet.getRange(rowIndex, 2, 1, 24).getValues()[0];
+    
+    // 2. Prepare New Data
     const phoneStr = form.phone ? "'" + form.phone : ""; 
-    const record = [[
+    const newRecord = [
       String(form.hn), String(form.cid), form.prefix, form.fname, form.lname, form.age, form.sex,
       form.specimenDate, form.receivedDate, form.unit, form.district, form.hcode, form.coordinator, phoneStr,
       form.para, form.last, form.lmp, form.contraception, form.prevTx, form.clinFind, form.clinDx,
       form.lastPap, form.method, form.registerName
-    ]];
-    sheet.getRange(rowIndex, 2, 1, 24).setValues(record); 
+    ];
+    
+    // 3. Generate Diff String
+    const headers = ['HN', 'CID', 'Prefix', 'Fname', 'Lname', 'Age', 'Sex', 'SpecimenDate', 'RecDate', 'Unit', 'District', 'HCode', 'Coordinator', 'Phone', 'Para', 'Last', 'LMP', 'Contraception', 'PrevTx', 'ClinFind', 'ClinDx', 'LastPap', 'Method', 'RegName'];
+    const diffLog = getDiffString(oldData, newRecord, headers);
+    
+    // 4. Update Database
+    sheet.getRange(rowIndex, 2, 1, 24).setValues([newRecord]); 
     const cytoNo = sheet.getRange(rowIndex, 1).getValue();
-    logData(year, "Edit", "Updated sample info", username, cytoNo);
+    
+    // 5. Save Log
+    logData(year, "Edit Registration", diffLog, username, cytoNo);
+    
     return { status: 'success', cytoNo: cytoNo };
   } catch (e) { return { status: 'error', message: "Update Failed: " + e.message }; }
   finally { lock.releaseLock(); }
 }
 
-// --- API: REPORT ---
+// --- API: REPORT (WITH FORENSIC DIFF AUDIT LOG) ---
 function apiSubmitReport(form, year, username) {
   try {
     const sheet = getDbSheet(year);
     const row = parseInt(form.rowId);
     
-    sheet.getRange(row, 27).setValue(form.adequacy);       
-    sheet.getRange(row, 28).setValue(form.adequacyDetail); 
-    sheet.getRange(row, 29).setValue(form.additional);     
-    sheet.getRange(row, 30).setValue(form.organism);       
-    sheet.getRange(row, 31).setValue(form.nonNeo);         
+    // 1. Get Old Data for Diff
+    const oldData = sheet.getRange(row, 27, 1, 16).getValues()[0]; // Col 27 to 42
     
-    sheet.getRange(row, 32).setValue(form.squamousMain);   
-    sheet.getRange(row, 33).setValue(form.squamousSub);    
-    sheet.getRange(row, 34).setValue(form.glandularMain);  
-    sheet.getRange(row, 35).setValue(form.glandularSub);   
+    // 2. Prepare New Data
+    const cytoDT = form.cytoDateTime ? "'" + form.cytoDateTime : "";
+    const pathoDT = form.pathoDateTime ? "'" + form.pathoDateTime : "";
     
-    sheet.getRange(row, 36).setValue(form.cat300);         
-    sheet.getRange(row, 37).setValue(form.comment);        
-    sheet.getRange(row, 38).setValue(form.cytoName);       
-    sheet.getRange(row, 39).setValue(form.cytoDateTime ? "'" + form.cytoDateTime : "");   
-    sheet.getRange(row, 40).setValue(form.pathoName);      
-    sheet.getRange(row, 41).setValue(form.pathoDateTime ? "'" + form.pathoDateTime : "");  
+    const newRecord = [
+      form.adequacy, form.adequacyDetail, form.additional, form.organism, form.nonNeo,
+      form.squamousMain, form.squamousSub, form.glandularMain, form.glandularSub,
+      form.cat300, form.comment, form.cytoName, cytoDT, form.pathoName, pathoDT, "Reported"
+    ];
     
-    sheet.getRange(row, 42).setValue("Reported");          
+    // 3. Update Database
+    sheet.getRange(row, 27, 1, 16).setValues([newRecord]); 
 
+    // 4. Generate Diff & Log
     const cytoNo = sheet.getRange(row, 1).getValue();
+    const headers = ['Adequacy', 'AdqDetail', 'Additional', 'Organism', 'NonNeo', 'SqMain', 'SqSub', 'GlMain', 'GlSub', 'Cat300', 'Comment', 'CytoName', 'CytoDT', 'PathoName', 'PathoDT', 'Status'];
     
-    const logAction = form.isEdit ? "Edit Report" : "Report";
-    const logDetail = form.isEdit ? "Updated report data" : "Reported sample";
-    logData(year, logAction, logDetail, username, cytoNo);
+    if (form.isEdit) {
+      const diffLog = getDiffString(oldData, newRecord, headers);
+      logData(year, "Edit Report", diffLog, username, cytoNo);
+    } else {
+      logData(year, "Submit Report", "Initial Report Submitted", username, cytoNo);
+    }
     
     return { status: 'success' };
   } catch (e) { return { status: 'error', message: e.message }; }
