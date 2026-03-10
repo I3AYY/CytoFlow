@@ -54,7 +54,7 @@
                     </div>
                     <p v-if="lockError" class="text-rose-400 text-sm font-bold">{{ lockError }}</p>
                     <button type="submit" class="w-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-bold py-3.5 rounded-xl shadow-[0_10px_20px_rgba(99,102,241,0.3)] transition-all transform hover:-translate-y-0.5 mt-1">Unlock Screen</button>
-                    <button type="button" @click="handleLogout" class="mt-3 text-slate-400 hover:text-white text-[13px] font-bold transition-colors">Not {{ user.name }}? Sign out</button>
+                    <button type="button" @click="handleCancelUnlock" class="mt-3 text-slate-400 hover:text-white text-[13px] font-bold transition-colors">Not {{ user.name }}? Sign out</button>
                 </form>
                 
                 <div class="text-center pt-6 mt-6 border-t border-white/10">
@@ -172,14 +172,21 @@
                 </div>
             </form>
 
-            <form v-else @submit.prevent="handleLoginStep2" class="space-y-5 animate-slide-up text-left">
-                <div class="text-center bg-blue-500/20 border border-blue-400/50 text-blue-100 p-4 rounded-2xl text-sm mb-4 backdrop-blur-sm shadow-sm"><i class="ph ph-envelope-open text-2xl block mb-2 text-blue-400 mx-auto"></i>{{ otpMessage }}</div>
+            <form v-else @submit.prevent="handleLoginStep2" class="space-y-3 animate-slide-up text-left">
+                <div class="text-center bg-blue-500/20 border border-blue-400/50 text-blue-100 p-4 rounded-2xl text-sm mb-2 backdrop-blur-sm shadow-sm"><i class="ph ph-envelope-open text-2xl block mb-2 text-blue-400 mx-auto"></i>{{ otpMessage }}</div>
                 <div>
                     <label class="block text-xs font-bold text-slate-300 mb-1.5 text-center uppercase tracking-widest">OTP Code</label>
                     <input v-model="otpInput" type="text" maxlength="6" class="w-full text-center tracking-[0.7em] text-3xl font-black py-4 bg-white/10 border-2 border-indigo-400/50 rounded-2xl focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/20 outline-none text-white transition-all shadow-inner" placeholder="••••••" required>
                 </div>
+                
+                <div class="flex justify-between items-center mb-3 px-1">
+                    <button type="button" @click="handleCancelLogin" class="text-slate-400 hover:text-white text-sm font-bold transition-colors">← Back</button>
+                    <button type="button" @click="handleResendOtp" :disabled="otpCooldown > 0" class="text-indigo-400 hover:text-indigo-300 text-sm font-bold disabled:text-slate-600 disabled:cursor-not-allowed transition-colors">
+                        {{ otpCooldown > 0 ? `Resend OTP (${otpCooldown}s)` : 'Resend OTP' }}
+                    </button>
+                </div>
+
                 <button type="submit" class="w-full bg-gradient-to-r from-emerald-400 to-teal-500 hover:from-emerald-500 hover:to-teal-600 text-white font-bold py-4 rounded-2xl shadow-[0_10px_20px_rgba(16,185,129,0.3)] transition-all transform hover:-translate-y-0.5">Verify Identity</button>
-                <button type="button" @click="loginStep=1" class="w-full text-slate-400 hover:text-white text-sm font-bold transition-colors mt-2 text-center">← Back to Login</button>
             </form>
         </div>
     </div>
@@ -238,7 +245,6 @@
 
             <!-- 5. Navigation Links -->
             <nav class="flex-1 p-3 space-y-1.5 overflow-y-auto overflow-x-hidden">
-                <!-- Removed Register Button from Sidebar as requested -->
                 <a href="#" @click.prevent="page = 'dashboard'" :class="['flex items-center gap-4 px-3 py-3.5 rounded-2xl transition-all group overflow-hidden', ['dashboard', 'register'].includes(page) ? 'bg-blue-500/10 text-blue-600 shadow-sm border border-blue-500/20' : 'theme-text-muted hover:bg-black/5 hover:theme-text']" :title="!isSidebarOpen ? 'รายการผู้รับบริการ' : ''">
                     <div class="w-8 flex justify-center"><i class="ph ph-users-three text-2xl group-hover:text-blue-500 transition-all"></i></div>
                     <span v-show="isSidebarOpen" class="whitespace-nowrap font-bold text-[15px]">รายการผู้รับบริการ</span>
@@ -856,7 +862,6 @@
                                         <div class="bg-[var(--bg-input)] p-2.5 rounded-lg border theme-border shadow-sm flex flex-col md:flex-row gap-2 mt-2">
                                             <div class="flex-1">
                                                 <label class="label-sm">Additional (เพิ่มเติม)</label>
-                                                <!-- แก้ไข: ตัดเงื่อนไข dynamic class ออกและใช้ font-bold theme-text แบบถาวร -->
                                                 <select v-model="formReport.additional" class="input-std focus:ring-2 focus:ring-emerald-500 mt-1 font-bold theme-text" :disabled="viewMode">
                                                     <option value="">ระบุ...</option>
                                                     <option v-for="(opt, idx) in additionalOptions" :key="'add-'+idx" :value="opt.text">{{ opt.text }}</option>
@@ -1033,7 +1038,6 @@
                                 </div>
 
                                 <div class="smart-blur-content relative z-0">
-                                    <!-- แก้ไข: ตัดเงื่อนไข dynamic class ออกและใช้ font-bold theme-text แบบถาวร -->
                                     <select v-model="formReport.cat300" class="input-std focus:ring-2 focus:ring-rose-500 font-bold theme-text" :disabled="viewMode">
                                         <option value="">ระบุ...</option>
                                         <option v-for="(opt, idx) in masterCat300" :key="'c300-'+idx" :value="opt">{{ opt }}</option>
