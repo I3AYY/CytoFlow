@@ -197,14 +197,48 @@ function apiLoginStep1(username, password) {
         if (!email || email === "") return { status: 'error', message: 'Account นี้ยังไม่ระบุ Email ในระบบ' };
         
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        // ตั้งเวลา OTP หมดอายุที่ 300 วินาที (5 นาที)
         CacheService.getScriptCache().put("OTP_" + username, otp, 300);
+
+        // --- NEW OTP EMAIL TEMPLATE (GitHub Style with PDPA) ---
+        const htmlTemplate = `
+        <div style="font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif,'Apple Color Emoji','Segoe UI Emoji'; color: #24292f; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <div style="text-align: center; margin-bottom: 24px;">
+                <img src="${logoUrl}" alt="CytoFlow Logo" style="width: 64px; height: 64px; border-radius: 50%; object-fit: contain; vertical-align: middle;">
+                <span style="font-size: 32px; font-weight: 600; color: #24292f; vertical-align: middle; margin-left: 12px; letter-spacing: -0.5px; display: inline-block;">CytoFlow</span>
+            </div>
+            <h2 style="font-size: 24px; font-weight: 400; text-align: center; margin-bottom: 24px; color: #24292f;">
+                กรุณายืนยันตัวตนของคุณ, <strong>${username}</strong>
+            </h2>
+            <div style="background-color: #ffffff; border: 1px solid #d0d7de; border-radius: 6px; padding: 24px;">
+                <p style="margin-top: 0; margin-bottom: 16px; font-size: 14px;">นี่คือรหัส OTP สำหรับยืนยันการเข้าสู่ระบบของคุณ:</p>
+                <div style="text-align: center; font-size: 32px; font-family: ui-monospace,SFMono-Regular,SF Mono,Menlo,Consolas,Liberation Mono,monospace; letter-spacing: 8px; color: #24292f; margin: 24px 0;">
+                    ${otp}
+                </div>
+                <p style="font-size: 14px; margin-bottom: 16px;">
+                    รหัสนี้มีอายุการใช้งาน <strong>5 นาที</strong> และสามารถใช้ได้เพียงครั้งเดียว
+                </p>
+                <p style="font-size: 14px; margin-bottom: 16px;">
+                    <strong>โปรดอย่าแชร์รหัสนี้กับใคร:</strong> ทีมงานจะไม่ขอรหัสผ่านหรือ OTP ของคุณทางโทรศัพท์หรืออีเมล<br>
+                    เด็ดขาด (มาตรการรักษาความปลอดภัยข้อมูลส่วนบุคคล - PDPA)
+                </p>
+                <p style="font-size: 14px; margin-bottom: 0;">
+                    ขอบคุณ,<br>ทีมงาน CytoFlow
+                </p>
+            </div>
+            <div style="margin-top: 32px; font-size: 12px; color: #6e7781; text-align: center; line-height: 1.5;">
+                คุณได้รับอีเมลฉบับนี้เนื่องจากมีการร้องขอรหัสยืนยันสำหรับบัญชีผู้ใช้ CytoFlow ของคุณ หากคุณไม่ได้เป็นผู้ร้องขอ<br>
+                โปรดเพิกเฉยต่ออีเมลฉบับนี้ หรือแจ้งผู้ดูแลระบบทันที
+            </div>
+        </div>
+        `;
 
         try { 
           MailApp.sendEmail({ 
             to: email, 
             subject: "รหัส OTP สำหรับเข้าสู่ระบบ CytoFlow", 
-            htmlBody: `<h2>รหัส OTP ของคุณคือ: <span style="color:blue; font-size:24px;">${otp}</span></h2><br><p>รหัสจะหมดอายุภายใน 5 นาที หากท่านไม่ได้เป็นคนเข้าสู่ระบบ โปรดแจ้ง Admin ทันที (PDPA Alert)</p>`,
-            name: "CytoFlow Security"
+            htmlBody: htmlTemplate,
+            name: "CytoFlow" // เปลี่ยนชื่อผู้ส่งตามต้องการ
           }); 
         } 
         catch (mailErr) { return { status: 'error', message: 'ส่งอีเมล OTP ไม่สำเร็จ: ' + mailErr.message }; }
