@@ -21,7 +21,10 @@ const app = createApp({
         const loginStep = ref(1);
         const otpInput = ref('');
         const otpMessage = ref('');
-        const appVersion = "1.3.1 AI Edition"; // อัปเดตเวอร์ชัน 1.3.1 AI Edition
+        const otpCooldown = ref(0); // For Resend OTP
+        let otpTimerInterval = null;
+        
+        const appVersion = "1.3.3 AI Edition"; 
         
         // --- Security / Lock Screen ---
         const isLocked = ref(false);
@@ -102,12 +105,12 @@ const app = createApp({
             return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(lastDay.getDate()).padStart(2, '0')}`;
         };
 
-        // --- Filter States (With New Defaults) ---
+        // --- Filter States ---
         const unitFilter = ref('All'); 
         const searchQuery = ref('');
-        const statusFilter = ref('Pending'); // เปลี่ยน Default เป็น รอผล
-        const dashDateStart = ref(getFirstDayOfMonth()); // Default ต้นเดือน
-        const dashDateEnd = ref(getLastDayOfMonth()); // Default ปลายเดือน
+        const statusFilter = ref('Pending'); 
+        const dashDateStart = ref(getFirstDayOfMonth()); 
+        const dashDateEnd = ref(getLastDayOfMonth()); 
 
         const defaultForm = {
             rowId: '', cytoNo: '', cytoNoPreview: '',
@@ -126,8 +129,8 @@ const app = createApp({
             searchContra: '', showContraList: false, contraOtherText: '',
             showPrevTxList: false, prevTxSelections: [], prevTxOtherText: '',
             lmpType: 'ระบุวันที่', lmpDate: '',
-            reportDateStart: getFirstDayOfMonth(), // Default ต้นเดือน
-            reportDateEnd: getLastDayOfMonth(), // Default ปลายเดือน
+            reportDateStart: getFirstDayOfMonth(), 
+            reportDateEnd: getLastDayOfMonth(), 
             reportSearch: '',
             reportAdditionalOther: '',
             showPatientInfo: false,
@@ -153,21 +156,24 @@ const app = createApp({
             hasPatho: false, pathoName: '', pathoDate: '', pathoTime: ''
         });
 
-        // --- Preferences System (Save/Load Filters) ---
+        // --- Frontend Audit Logger ---
+        const frontendLog = async (action, detail, username) => {
+            try { await runGas('apiFrontendLog', action, detail, username || 'Unknown'); } catch(e){}
+        };
+
+        // --- Preferences System ---
         const PREFS_KEY = 'cytoPrefs_v99';
         const loadPrefs = () => {
             try {
                 const prefsStr = localStorage.getItem(PREFS_KEY);
                 if (prefsStr) {
                     const p = JSON.parse(prefsStr);
-                    // Load Year (Fall back to current Thai year if not found)
                     if (p.selectedYear && config.years.includes(p.selectedYear)) {
                         config.selectedYear = p.selectedYear;
                     } else {
                         const currentThaiYear = (new Date().getFullYear() + 543).toString();
                         if (config.years.includes(currentThaiYear)) config.selectedYear = currentThaiYear;
                     }
-                    
                     if (p.statusFilter) statusFilter.value = p.statusFilter;
                     if (p.dashDateStart !== undefined) dashDateStart.value = p.dashDateStart;
                     if (p.dashDateEnd !== undefined) dashDateEnd.value = p.dashDateEnd;
@@ -192,7 +198,6 @@ const app = createApp({
             localStorage.setItem(PREFS_KEY, JSON.stringify(p));
         };
 
-        // Watch for changes to save preferences automatically
         watch([() => config.selectedYear, statusFilter, dashDateStart, dashDateEnd, () => ui.reportDateStart, () => ui.reportDateEnd], () => {
             if (page.value !== 'login') savePrefs();
         }, { deep: true });
@@ -277,6 +282,7 @@ const app = createApp({
                         const timeElapsed = Date.now() - lastActive;
 
                         if (timeElapsed > SESSION_LIMIT_MS) {
+                            frontendLog("Auto Logout", "Session expired due to inactivity", user.username);
                             forceLogout(true); 
                         }
                     } catch(e) {}
@@ -320,7 +326,6 @@ const app = createApp({
                             localStorage.setItem('cytoUser_v99', JSON.stringify(savedUser));
                         } catch(e) {}
                     }
-
                     resetAfkTimer();
                 } else {
                     lockError.value = 'รหัสผ่านผิดพลาด ระบบกำลังออกจากระบบ...';
@@ -331,6 +336,11 @@ const app = createApp({
             } finally {
                 isLoading.value = false;
             }
+        };
+
+        const handleCancelUnlock = () => {
+            frontendLog("Cancel Unlock", "User canceled screen unlock and chose to logout", user.username);
+            forceLogout();
         };
 
         const handleMainScroll = (e) => {};
@@ -750,6 +760,17 @@ const app = createApp({
             }
         };
 
+        const startOtpTimer = () => {
+            otpCooldown.value = 60;
+            if (otpTimerInterval) clearInterval(otpTimerInterval);
+            otpTimerInterval = setInterval(() => {
+                otpCooldown.value--;
+                if (otpCooldown.value <= 0) {
+                    clearInterval(otpTimerInterval);
+                }
+            }, 1000);
+        };
+
         const handleLoginStep1 = async () => {
             if (!formLogin.username || !formLogin.password) return;
             isLoading.value = true;
@@ -759,6 +780,7 @@ const app = createApp({
                     loginStep.value = 2; 
                     otpMessage.value = res.message; 
                     if(res.systemLogo) systemConfig.logoUrl = res.systemLogo; 
+                    startOtpTimer();
                 } else { 
                     if(typeof Swal !== 'undefined') Swal.fire('Login Failed', res.message, 'error'); 
                 }
@@ -769,12 +791,25 @@ const app = createApp({
             }
         };
 
+        const handleResendOtp = async () => {
+            if (otpCooldown.value > 0) return;
+            handleLoginStep1(); 
+        };
+
+        const handleCancelLogin = () => {
+            frontendLog("Cancel Login", "User backed out of OTP screen", formLogin.username);
+            loginStep.value = 1;
+            otpInput.value = '';
+            if (otpTimerInterval) clearInterval(otpTimerInterval);
+        };
+
         const handleLoginStep2 = async () => {
             if (!otpInput.value) return;
             isLoading.value = true;
             try {
                 const res = await runGas('apiVerifyOtp', formLogin.username, otpInput.value);
                 if (res.status === 'success') {
+                    if (otpTimerInterval) clearInterval(otpTimerInterval);
                     Object.assign(user, res.user); 
                     config.years = res.years || [];
                     
@@ -809,7 +844,10 @@ const app = createApp({
         };
 
         const handleLogout = async () => {
-            if(typeof Swal === 'undefined') return forceLogout();
+            if(typeof Swal === 'undefined') {
+                frontendLog("Logout", "User initiated manual logout", user.username);
+                return forceLogout();
+            }
             
             const result = await Swal.fire({ 
                 title: 'ออกจากระบบ?', 
@@ -819,7 +857,10 @@ const app = createApp({
                 confirmButtonText: 'ยืนยัน', 
                 cancelButtonText: 'ยกเลิก' 
             });
-            if (result.isConfirmed) forceLogout();
+            if (result.isConfirmed) {
+                frontendLog("Logout", "User confirmed sign out", user.username);
+                forceLogout();
+            }
         };
 
         const forceLogout = (isExpired = false) => {
@@ -828,6 +869,7 @@ const app = createApp({
             isLoading.value = true;
             clearTimeout(afkTimeout);
             if (sessionCheckInterval) clearInterval(sessionCheckInterval); 
+            if (otpTimerInterval) clearInterval(otpTimerInterval);
             
             setTimeout(() => {
                 user.name = ''; 
@@ -1198,7 +1240,6 @@ const app = createApp({
                 formReport.pathoTime = '';
             }
 
-            // ถ้าเป็นรายการใหม่ (Pending) และไม่ได้อ่านอย่างเดียว ให้ดึงชื่อและเวลาปัจจุบันมาตั้งต้นให้เลย (เฉพาะ Cytotech)
             if (!isReadonly && patient.status === 'Pending') {
                 if (user.role !== 'Admin' && masterCytoTechs.value.includes(user.name)) {
                     formReport.cytoName = user.name;
@@ -1215,7 +1256,6 @@ const app = createApp({
         const submitReport = async () => {
             if (viewMode.value) return;
 
-            // ตรวจสอบความครบถ้วน
             if (!formReport.adequacy) {
                 if (typeof Swal !== 'undefined') Swal.fire('ข้อมูลไม่ครบ', 'กรุณาประเมินความสมบูรณ์ของสิ่งส่งตรวจ (Adequacy)', 'warning');
                 return;
@@ -1257,7 +1297,6 @@ const app = createApp({
                         pathoDateTime: formReport.hasPatho ? formatSignatureDate(formReport.pathoDate, formReport.pathoTime) : ''
                     };
 
-                    // จัดการข้อมูล Organism
                     let orgList = [];
                     formReport.organismSelections.forEach(org => {
                         if (org === '109 Other organism') {
@@ -1268,14 +1307,12 @@ const app = createApp({
                     });
                     payload.organism = orgList.join(', ');
 
-                    // จัดการข้อมูล Squamous Sub
                     if (formReport.squamousSubSingle === '241 SIL') {
                         payload.squamousSub = '241 SIL - ' + formReport.vainOption;
                     } else {
                         payload.squamousSub = formReport.squamousSubSingle;
                     }
 
-                    // ป้องกันความผิดพลาดทางวิชาการ: ล้างข้อมูลส่วนอื่น หากประเมินว่า 030 Unsatisfactory
                     if (formReport.adequacy === '030 Unsatisfactory for evaluation') {
                         payload.organism = ''; payload.nonNeo = '';
                         payload.squamousMain = ''; payload.squamousSub = '';
@@ -1310,7 +1347,7 @@ const app = createApp({
             const file = event.target.files[0];
             if (!file) return;
             
-            const maxSize = 2 * 1024 * 1024; // Limit at 2MB for stability
+            const maxSize = 2 * 1024 * 1024; 
             if (file.size > maxSize) {
                 if (typeof Swal !== 'undefined') Swal.fire('ขนาดไฟล์เกิน', 'กรุณาอัปโหลดรูปภาพขนาดไม่เกิน 2MB', 'warning');
                 return;
@@ -1400,8 +1437,8 @@ const app = createApp({
 
         // --- EXPORT TO TEMPLATE ---
         return {
-            page, loginStep, otpInput, otpMessage, appVersion,
-            isLocked, lockPassword, lockError, unlockScreen, lockScreen,
+            page, loginStep, otpInput, otpMessage, appVersion, otpCooldown,
+            isLocked, lockPassword, lockError, unlockScreen, lockScreen, handleCancelUnlock,
             theme, changeTheme,
             isLoading, isDataLoading, isSpinning, isEditMode, viewMode, 
             isSidebarOpen, isDashboardTopOpen,
@@ -1418,7 +1455,7 @@ const app = createApp({
             filteredPatients, filteredReportPatients,
             closeAllDropdowns, selectContra, togglePrevTx, toggleOrganism, toggleNonNeo, getMethodColor,
             logoRef, isLogoPlaying, toggleLogo, getTAT,
-            handleLoginStep1, handleLoginStep2, handleLogout, fetchData, getNextCytoPreview,
+            handleLoginStep1, handleLoginStep2, handleResendOtp, handleCancelLogin, handleLogout, fetchData, getNextCytoPreview,
             openRegisterPage, openEditMode, openViewMode, submitRegister,
             openReportList, openReportForm, submitReport,
             handleImageUpload, openChangePassword, handleMainScroll, handleTableScroll
